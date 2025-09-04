@@ -1,5 +1,9 @@
 using CS478_EventPlannerProject.Data;
 using CS478_EventPlannerProject.Models;
+using CS478_EventPlannerProject.Services.Interfaces;
+using CS478_EventPlannerProject.Services.Implementation;
+
+
 //using CS478_EventPlannerProject.Services.Implementation;
 //using CS478_EventPlannerProject.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
@@ -49,6 +53,13 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<IUserProfileService, UserProfileService>();
+builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IThemeService, ThemeService>();
+builder.Services.AddScoped<ICustomFieldsService, CustomFieldService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 //AutoMapper
 //builder.Services.AddAutoMapper(typeof(Program));

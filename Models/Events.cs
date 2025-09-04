@@ -54,7 +54,7 @@ namespace CS478_EventPlannerProject.Models
         [Required]
         [ForeignKey("Creator")]
         public string CreatorId { get; set; } = string.Empty;
-        public int? MaxAttendess { get; set; }
+        public int? MaxAttendees { get; set; }
         public bool IsPrivate { get; set; } = false;
         public bool RequiresApproval { get; set; } = false;
         public bool AllowGuestList { get; set; } = true;
@@ -74,7 +74,7 @@ namespace CS478_EventPlannerProject.Models
         public bool IsDeleted { get; set; } = false;
 
         //Navigation Properties
-        public virtual Users Creator { get; set; } = null;
+        public virtual Users Creator { get; set; } = null!;
         public virtual EventTheme? Theme { get; set; }
         public virtual ICollection<EventAttendees> Attendees { get; set; } = new List<EventAttendees>();
         public virtual ICollection<EventCustomFields> CustomFields { get; set; } = new List<EventCustomFields>();
