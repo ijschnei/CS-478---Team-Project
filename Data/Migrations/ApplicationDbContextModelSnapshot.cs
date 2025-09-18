@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace CS478_EventPlannerProject.Data.Migrations
+namespace CS478_EventPlannerProject.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     partial class ApplicationDbContextModelSnapshot : ModelSnapshot
@@ -17,7 +17,7 @@ namespace CS478_EventPlannerProject.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.10")
+                .HasAnnotation("ProductVersion", "8.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -240,7 +240,7 @@ namespace CS478_EventPlannerProject.Data.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2025, 9, 4, 18, 46, 14, 431, DateTimeKind.Utc).AddTicks(9355),
+                            CreatedAt = new DateTime(2025, 9, 5, 18, 48, 25, 546, DateTimeKind.Utc).AddTicks(2292),
                             Description = "Clean and professional theme",
                             IsActive = true,
                             IsPremium = false,
@@ -249,7 +249,7 @@ namespace CS478_EventPlannerProject.Data.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2025, 9, 4, 18, 46, 14, 431, DateTimeKind.Utc).AddTicks(9361),
+                            CreatedAt = new DateTime(2025, 9, 5, 18, 48, 25, 546, DateTimeKind.Utc).AddTicks(2304),
                             Description = "Contemporary design with bold colors",
                             IsActive = true,
                             IsPremium = false,
@@ -258,7 +258,7 @@ namespace CS478_EventPlannerProject.Data.Migrations
                         new
                         {
                             Id = 3,
-                            CreatedAt = new DateTime(2025, 9, 4, 18, 46, 14, 431, DateTimeKind.Utc).AddTicks(9362),
+                            CreatedAt = new DateTime(2025, 9, 5, 18, 48, 25, 546, DateTimeKind.Utc).AddTicks(2306),
                             Description = "Sophisticated and refined styling",
                             IsActive = true,
                             IsPremium = true,
@@ -333,7 +333,7 @@ namespace CS478_EventPlannerProject.Data.Migrations
                     b.Property<bool>("IsVirtual")
                         .HasColumnType("bit");
 
-                    b.Property<int?>("MaxAttendess")
+                    b.Property<int?>("MaxAttendees")
                         .HasColumnType("int");
 
                     b.Property<string>("PostalCode")
