@@ -6,7 +6,7 @@ namespace CS478_EventPlannerProject.Models
     {
         [Key]
         public int UserProfileId { get; set; }
-        [Required]
+        
         [ForeignKey("UserId")]
         public string UserId { get; set; } = string.Empty;
         [MaxLength(50)]
@@ -45,7 +45,7 @@ namespace CS478_EventPlannerProject.Models
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation properties
-        public virtual Users User { get; set; } = null!;
+        public virtual Users? User { get; set; }
         // Computed property
         [NotMapped]
         public string FullName => !string.IsNullOrEmpty(FirstName) && !string.IsNullOrEmpty(LastName)

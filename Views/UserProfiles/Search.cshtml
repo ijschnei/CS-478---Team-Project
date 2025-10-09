@@ -1,0 +1,30 @@
+﻿@model List<CS478_EventPlannerProject.Models.UserProfiles>
+@{
+	ViewData["Title"] = "Search Profiles";
+}
+
+<h2>Search User Profiles</h2>
+<form asp-action="Search" method="get">
+    <div class="form-group">
+        <label for="searchTerm">Search by Name</label>
+        <input type="text" name="searchTerm" class="form-control" placeholder="Search..." value="@ViewBag.SearchTerm" />
+    </div>
+    <button type="submit" class="btn btn-primary">Search</button>
+</form>
+
+<h3>Search Results</h3>
+@if (Model != null && Model.Any())
+{
+    <ul>
+        @foreach (var profile in Model)
+        {
+            <li>
+                <a href="@Url.Action("View", "UserProfiles", new { userId = profile.UserId })">@profile.FullName</a> - @profile.DisplayName
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p>No profiles found matching your search.</p>
+}

@@ -115,23 +115,32 @@ namespace CS478_EventPlannerProject.Controllers
         // POST: UserProfiles/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit([Bind("UserProfileId,UserId,FirstName,LastName,DisplayName,Bio,ProfileImageUrl,DateOfBirth,Location,Website,FacebookUrl,TwitterUrl,LinkedInUrl,IsPublic")]UserProfiles profile)
+        public async Task<IActionResult> Edit([Bind("UserProfileId,FirstName,LastName,DisplayName,Bio,ProfileImageUrl,DateOfBirth,Location,Website,FacebookUrl,TwitterUrl,LinkedInUrl,IsPublic")]UserProfiles profile)
         {
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null)
                 return RedirectToAction("Login", "Account");
             //ensure the profile belongs to the current user (security check)
-            if (profile.UserId != currentUser.Id)
-                return Forbid();
+            //if (profile.UserId != currentUser.Id)
+            //    return Forbid();
+            if (profile.UserProfileId != 0)
+            {
+                var existingProfile = await _userProfileService.GetProfileByUserIdAsync(currentUser.Id);
+                if(existingProfile == null || existingProfile.UserProfileId != profile.UserProfileId)
+                {
+                    return Forbid();
+                }
+            }
             if (ModelState.IsValid)
             {
                 try
                 {
+                    profile.UserId = currentUser.Id;
                     UserProfiles? updatedProfile;
                     if (profile.UserProfileId == 0)
                     {
                         //create new profile
-                        profile.UserId = currentUser.Id;
+                        //profile.UserId = currentUser.Id;
                         updatedProfile = await _userProfileService.CreateProfileAsync(profile);
                     }
                     else
@@ -161,10 +170,21 @@ namespace CS478_EventPlannerProject.Controllers
             }
             return View(profile);
         }
-        // POST: UserProfiles/Delete
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        // GET: UserProfiles/Delete
         public async Task<IActionResult> Delete()
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+                return RedirectToAction("Login", "Account");
+            var profile = await _userProfileService.GetProfileByUserIdAsync(currentUser.Id);
+            if (profile == null)
+                return NotFound();
+            return View(profile);
+        }
+        // POST: UserProfiles/Delete
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed()
         {
             try
             {
@@ -184,8 +204,9 @@ namespace CS478_EventPlannerProject.Controllers
             catch (Exception)
             {
                 TempData["Error"] = "An error occurred while deleting the profile.";
+                return RedirectToAction(nameof(Profile));
             }
-            return RedirectToAction("Index", "Dashboard");
+            return RedirectToAction("Index", "Home");
         }
         // GET: UserProfiles/Search
         public async Task<IActionResult> Search(string searchTerm)

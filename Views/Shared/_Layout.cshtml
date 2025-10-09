@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+@using CS478_EventPlannerProject.Models
+@inject UserManager<Users> UserManager
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -25,8 +28,24 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" href="@Url.Action("Profile", "UserProfiles")">My Profile</a>
+                            </li>
+                            <!-- Add a Logout link or other user-related actions -->
+                            <li class="nav-item">
+                                <form asp-action="Logout" method="post" class="form-inline">
+                                    <button type="submit" class="btn btn-link">Logout</button>
+                                </form>
+                            </li>
+                        }
+                        else
+                        {
+                            <partial name="_LoginPartial" />
+                        }
                     </ul>
-                    <partial name="_LoginPartial" />
+                    <!--<partial name="_LoginPartial" />-->
                 </div>
             </div>
         </nav>

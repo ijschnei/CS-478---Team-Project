@@ -1,0 +1,30 @@
+﻿@model CS478_EventPlannerProject.Models.UserProfiles
+
+@{
+    ViewData["Title"] = "Delete Profile";
+}
+
+<h2>Delete Profile</h2>
+
+<h4>Are you sure you want to delete your profile?</h4>
+<div>
+    <dl class="row">
+        <dt class="col-sm-2">Full Name</dt>
+        <dd class="col-sm-10">@Model.FullName</dd>
+
+        <dt class="col-sm-2">Display Name</dt>
+        <dd class="col-sm-10">@Model.DisplayName</dd>
+
+        <dt class="col-sm-2">Location</dt>
+        <dd class="col-sm-10">@Model.Location</dd>
+
+        <dt class="col-sm-2">Bio</dt>
+        <dd class="col-sm-10">@Model.Bio</dd>
+    </dl>
+
+    <form asp-action="Delete" method="post">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-danger">Yes, delete my profile</button>
+        <a asp-action="Profile" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>

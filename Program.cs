@@ -4,6 +4,7 @@ using CS478_EventPlannerProject.Services.Interfaces;
 using CS478_EventPlannerProject.Services.Implementation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -58,6 +59,7 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IThemeService, ThemeService>();
 builder.Services.AddScoped<ICustomFieldsService, CustomFieldService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddTransient<IEmailSender, EmailSenderService>();
 
 //AutoMapper
 //builder.Services.AddAutoMapper(typeof(Program));
