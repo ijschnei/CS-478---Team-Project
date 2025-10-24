@@ -33,10 +33,16 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="@Url.Action("Profile", "UserProfiles")">My Profile</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Messages" asp-action="Index">
+                                    <i class="bi bi-chat-dots"></i>Messages 
+                                    <span id="unread-badge" class="badge bg-danger"></span>
+                                </a>
+                            </li>
                             <!-- Add a Logout link or other user-related actions -->
                             <li class="nav-item">
-                                <form asp-action="Logout" method="post" class="form-inline">
-                                    <button type="submit" class="btn btn-link">Logout</button>
+                                <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                                    <button type="submit" class="nav-link btn btn-link text-dark">Logout</button>
                                 </form>
                             </li>
                         }

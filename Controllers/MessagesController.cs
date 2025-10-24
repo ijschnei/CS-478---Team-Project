@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using CS478_EventPlannerProject.Models;
 using CS478_EventPlannerProject.Services.Interfaces;
+using CS478_EventPlannerProject.ViewModels;
 
 namespace CS478_EventPlannerProject.Controllers
 {
@@ -303,31 +304,5 @@ namespace CS478_EventPlannerProject.Controllers
             }
         }
     }
-    //View Models
-    public class ConversationViewModel
-    {
-        public Guid ConversationId { get; set; }
-        public Messages LastMessage { get; set; }
-        public int UnreadCount { get; set; }
-        public int MessageCount { get; set; }
-    }
-
-    public class ComposeMessageViewModel
-    {
-        public string ReceiverId { get; set; } = string.Empty;
-        public string? ReceiverName { get; set; }
-        public string? Subject { get; set; }
-        public string Content { get; set; } = string.Empty;
-        public string? MessageType { get; set; } = "direct";
-        public int? RelatedEventId { get; set; }
-        public string? EventName { get; set; }
-    }
-
-    public class QuickReplyModel
-    {
-        public Guid ConversationId { get; set; }
-        public string Content { get; set; } = string.Empty;
-        public string? MessageType { get; set; }
-        public int? RelatedEventId { get; set; }
-    }
+ 
 }

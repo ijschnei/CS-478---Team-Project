@@ -102,6 +102,46 @@ namespace CS478_EventPlannerProject.Services.Implementation
                 throw new InvalidOperationException($"Failed to delete profile for user {userId}", ex);
             }
         }
+
+        public async Task<IEnumerable<UserProfiles>> SearchProfilesAsync(string searchTerm)
+        {
+            if(string.IsNullOrWhiteSpace(searchTerm)) return Enumerable.Empty<UserProfiles>();
+
+            try
+            {
+                var term = searchTerm.Trim().ToLower();
+                return await _context.UserProfiles
+                    .Include(up=>up.User)
+                    .Where(up=>up.IsPublic && (up.FirstName!.ToLower().Contains(term) ||
+                           up.LastName!.ToLower().Contains(term) ||
+                           up.DisplayName!.ToLower().Contains(term)))
+                    .OrderBy(up=>up.FirstName)
+                    .ThenBy(up=>up.LastName)
+                    .ToListAsync();
+            }
+            catch(Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to search profiles with term '{searchTerm}'");
+            }
+        }
+
+        public async Task<IEnumerable<UserProfiles>> GetAllPublicProfilesAsync()
+        {
+            try
+            {
+                return await _context.UserProfiles
+                    .Include(up => up.User)
+                    .Where(up => up.IsPublic)
+                    .OrderBy(up => up.FirstName)
+                    .ThenBy(up => up.LastName)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException("Failed to retrieve public profiles", ex);
+            }
+        }
     }
+
 
 }

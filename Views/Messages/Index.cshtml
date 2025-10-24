@@ -1,0 +1,143 @@
+﻿@model IEnumerable<CS478_EventPlannerProject.ViewModels.ConversationViewModel>
+@{
+    ViewData["Title"] ="Messages";
+    var unreadTotal = ViewBag.UnreadTotal ?? 0;
+    var currentUserId = ViewBag.CurrentUserId as string;
+}
+
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="bi bi-chat-dots"></i> Messages
+                    @if (unreadTotal > 0)
+                    {
+                        <span class="badge bg-danger">@unreadTotal unread</span>
+                    }
+                </h2>
+                <a asp-action="Compose" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> New Message
+                </a>
+            </div>
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if(TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (!Model.Any())
+            {
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> You don't have any messages yet.
+                    <a asp-action="Compose" class="alert-link">Send your first message</a>
+                </div>
+            }
+            else
+            {
+                <div class="card">
+                    <div class="list-group list-group-flush">
+                        @foreach(var conversation in Model)
+                        {
+                            var lastMsg = conversation.LastMessage;
+                            var otherUser = lastMsg.SenderId == currentUserId ? lastMsg.Receiver : lastMsg.Sender;
+                            var isUnread = conversation.UnreadCount > 0;
+                            var previewText = lastMsg.Content.Length > 100
+                                ? lastMsg.Content.Substring(0, 100) + "..."
+                                : lastMsg.Content;
+                            <a asp-action="Conversation"
+                                asp-route-conversationId="@conversation.ConversationId"
+                                class="list-group-item list-group-item-action @(isUnread ? "bg-light" : "")">
+                                <div class="d-flex w-100 justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <h5 class="mb-0 @(isUnread ? "fw-bold" : "")">
+                                                @(otherUser?.Profile?.FullName ?? otherUser?.UserName ?? "Unknown User")
+                                            </h5>
+                                            @if (isUnread)
+                                            {
+                                                <span class="badge bg-primary ms-2">@conversation.UnreadCount</span>
+                                            }
+                                            @if (lastMsg.MessageType == "event_related")
+                                            {
+                                                <span class="badge bg-info ms-2">
+                                                    <i class="bi bi-calendar-event"></i> Event
+                                                </span>
+                                            }
+                                        </div>
+
+                                        @if (!string.IsNullOrEmpty(lastMsg.Subject))
+                                        {
+                                            <p class="mb-1 @(isUnread ? "fw-semibold" : "") text-muted">
+                                                @lastMsg.Subject
+                                            </p>
+                                        }
+                                        <p class="mb-1 text-muted small">
+                                            @previewText
+                                        </p>
+                                        @if(lastMsg.RelatedEvent != null)
+                                        {
+                                            <small class="text-info">
+                                                <i class="bi bi-link-45deg"></i> @lastMsg.RelatedEvent.EventName
+                                            </small>
+                                        }
+                                    </div>
+                                    <div class="text-end ms-3">
+                                        <small class="text-muted">
+                                            @if (lastMsg.SentAt.Date == DateTime.Today)
+                                            {
+                                                @lastMsg.SentAt.ToString("h:mm tt")
+                                            }
+                                            else if(lastMsg.SentAt.Date == DateTime.Today.AddDays(-1))
+                                            {
+                                                <text>Yesterday</text>
+                                            }
+                                            else
+                                            {
+                                                @lastMsg.SentAt.ToString("MM dd")
+                                            }
+                                        </small>
+                                        <div class="mt-1">
+                                            <small class="text-muted">
+                                                @conversation.MessageCount message@(conversation.MessageCount != 1 ? "s" : "")
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        // Auto-refresh unread count every 30 seconds
+        setInterval(async function() {
+            try {
+                const response = await fetch('@Url.Action("GetUnreadCount", "Messages")');
+                const data = await response.json();
+                if (data.count > 0) {
+                    document.title = `(${data.count}) Messages - Event Planner`;
+                } else {
+                    document.title = 'Messages - Event Planner';
+                }
+            } catch (error) {
+                console.error('Error fetching unread count:', error);
+            }
+        }, 30000);
+    </script>
+}

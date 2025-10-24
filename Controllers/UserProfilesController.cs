@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
 using CS478_EventPlannerProject.Models;
 using CS478_EventPlannerProject.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using System.Linq.Expressions;
 
 namespace CS478_EventPlannerProject.Controllers
@@ -42,6 +43,7 @@ namespace CS478_EventPlannerProject.Controllers
                 var userEvents = await _eventService.GetEventsByUserIdAsync(currentUser.Id);
                 ViewBag.UserEvents = userEvents.Take(5).ToList(); //show only recent 5
                 ViewBag.TotalEvents = userEvents.Count();
+                ViewBag.IsCurrentUser = true;
 
                 return View(profile);
             }
@@ -77,7 +79,9 @@ namespace CS478_EventPlannerProject.Controllers
 
                 ViewBag.UserEvents = publicEvents;
                 ViewBag.TotalPublicEvents = userEvents.Count(e => !e.IsPrivate);
-                ViewBag.IsCurrentUser = false;
+                var currentViewingUser = await _userManager.GetUserAsync(User);
+                ViewBag.IsCurrentUser = currentViewingUser?.Id == userId;
+                
 
                 return View("Profile", profile);
             } catch (Exception)
@@ -121,8 +125,7 @@ namespace CS478_EventPlannerProject.Controllers
             if (currentUser == null)
                 return RedirectToAction("Login", "Account");
             //ensure the profile belongs to the current user (security check)
-            //if (profile.UserId != currentUser.Id)
-            //    return Forbid();
+            
             if (profile.UserProfileId != 0)
             {
                 var existingProfile = await _userProfileService.GetProfileByUserIdAsync(currentUser.Id);
@@ -140,7 +143,7 @@ namespace CS478_EventPlannerProject.Controllers
                     if (profile.UserProfileId == 0)
                     {
                         //create new profile
-                        //profile.UserId = currentUser.Id;
+                        
                         updatedProfile = await _userProfileService.CreateProfileAsync(profile);
                     }
                     else
@@ -211,21 +214,58 @@ namespace CS478_EventPlannerProject.Controllers
         // GET: UserProfiles/Search
         public async Task<IActionResult> Search(string searchTerm)
         {
-            if (string.IsNullOrWhiteSpace(searchTerm))
+            var results = new List<UserProfiles>();
+            if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                return View(new List<UserProfiles>());
+                try
+                {
+                    results = (await _userProfileService.SearchProfilesAsync(searchTerm)).ToList();
+
+                }
+                catch (Exception)
+                {
+                    TempData["Error"] = "Failed to search profiles.";
+                    return View(results);
+                }
+            }
+                ViewBag.SearchTerm = searchTerm;
+                return View(results);          
+        }
+        // GET: UserProfiles/SearchApi - Returns JSON for AJAX
+        [HttpGet]
+        public async Task<IActionResult> SearchApi(string searchTerm)
+        {
+            if(string.IsNullOrWhiteSpace(searchTerm) || searchTerm.Length < 2)
+            {
+                return Json(new List<object>());
             }
             try
             {
-                //TODO Add search method to IUserProfileService
-                //returning empty results for now
-                var profiles = new List<UserProfiles>();
-                ViewBag.SearchTerm = searchTerm;
+                var profiles = await _userProfileService.SearchProfilesAsync(searchTerm);
+                var results = profiles.Select(p => new
+                {
+                    userId = p.UserId,
+                    fullName = p.FullName,
+                    displayName = p.DisplayName
+                }).Take(10);
+                return Json(results);
+            }
+            catch (Exception)
+            {
+                return Json(new List<object>());
+            }
+        }
+        // GET: UserProfiles/Browse
+        public async Task<IActionResult> Browse()
+        {
+            try
+            {
+                var profiles = await _userProfileService.GetAllPublicProfilesAsync();
                 return View(profiles);
             }
             catch (Exception)
             {
-                TempData["Error"] = "Failed to search profiles.";
+                TempData["Error"] = "Failed to load profiles.";
                 return View(new List<UserProfiles>());
             }
         }

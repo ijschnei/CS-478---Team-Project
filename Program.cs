@@ -74,6 +74,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
+    await UserSeeder.SeedDummyUsersAsync(app);
 }
 else
 {

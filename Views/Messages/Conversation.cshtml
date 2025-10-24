@@ -1,0 +1,188 @@
+﻿@model IEnumerable<CS478_EventPlannerProject.Models.Messages>
+@{
+	ViewData["Title"] = "Conversation";
+	var currentUserId = ViewBag.CurrentUserId as string;
+	var conversationId = ViewBag.ConversationId as Guid?;
+	var otherParticipant = ViewBag.OtherParticipant as CS478_EventPlannerProject.Models.Users;
+}
+
+<div class="container mt-4">
+	<div class="row">
+		<div class="col-md-12">
+		<!--Conversation header-->
+			<div class="card mb-3">
+				<div class="card-body">
+					<div class="d-flex justify-content-between align-items-center">
+						<div>
+							<a asp-actions="Index" class="btn btn-sm btn-outline-secondary">
+								<i class ="bi bi-arrow-left"></i> Back to Messages
+							</a>
+							<h4 class=d-"inline ms-3 mb-0">
+								@if(otherParticipant != null)
+								{
+									@(otherParticipant.Profile?.FullName ?? otherParticipant.UserName ?? "Unknown User")
+								}
+								else
+								{
+									<text>Conversation</text>
+								}
+							</h4>
+						</div>
+						<div>
+							@if (otherParticipant != null)
+							{
+								<a asp-action="Compose" asp-route-receiverId="@otherParticipant.Id" class="btn btn-sm btn-primary">
+									<i class="bi bi-reply"></i> Reply
+								</a>
+							}
+						</div>
+					</div>
+				</div>
+			</div>
+			@if (TempData["Success"] != null)
+			{
+				<div class="alert alert-success alert-dismissable fade show" role="alert">
+					@TempData["Success"]
+					<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+				</div>
+			}
+			@if (TempData["Error"] != null)
+			{
+				<div class="alert alert-success alert-dismissable fade show" role="alert">
+					@TempData["Error"]
+					<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+				</div>
+			}
+			<!--Messages-->
+			<div class="card">
+				<div class="card-body" style="max-height: 600px; overflow-y: auto;" id="messageContainer">
+					@if (!Model.Any())
+					{
+						<div class="alert alert-info">
+							<i class="bi bi-info-circle"></i> No messages in this conversation yet.
+						</div>
+					}
+					else
+					{
+						@foreach (var message in Model)
+						{
+							var isCurrentUser = message.SenderId == currentUserId;
+							var alignClass = isCurrentUser ? "justify-content-end" : "justify-content-start";
+							var bgClass = isCurrentUser ? "bg-primary text-white" : "bg-light";
+
+							<div class="d-flex @alignClass mb-3">
+								<div class="message-bubble @bgClass p-3 rounded" style="max-width: 70%;">
+									@if (!string.IsNullOrEmpty(message.Subject))
+									{
+										<h6 class="mb-2 @(isCurrentUser ? "text-white-50" : "text-muted")">
+											<strong>@message.Subject</strong>
+										</h6>
+									}
+									<div class="message-content">
+										@Html.Raw(System.Net.WebUtility.HtmlEncode(message.Content).Replace("\n", "<br/>"))
+									</div>
+									@if (message.RelatedEvent != null)
+									{
+										<div class="mt-2 pt-2 border-top @(isCurrentUser ? "border-white-50" : "border-secondary")">
+											<small class="@(isCurrentUser ? "text-white-50" : "text-muted")">
+												<i class="bi bi-calendar-event"></i>
+												<a asp-controller="Events"
+												asp-action="Details"
+												asp-route-id="@message.RelatedEventId"
+												class="@(isCurrentUser ? "text-white" : "text-primary")">
+												@message.RelatedEvent.EventName
+											</a>
+											</small>
+										</div>
+									}
+									<div class="mt-2 text-end">
+										<small class="@(isCurrentUser ? "text-white-50" : "text-muted")">
+											@message.SentAt.ToString("MMM dd, yyyy h:mm tt")
+											@if (message.IsRead && isCurrentUser)
+											{
+												<i class="bi bi-check2-all"></i>
+											}
+										</small>
+									</div>
+								</div>
+							</div>
+						}
+					}
+				</div>
+			</div>
+
+			<!--quick reply form-->
+			@if (otherParticipant != null && conversationId.HasValue)
+			{
+				<div class="card mt-3">
+					<div class="card-body">
+						<form id="quickReplyForm">
+							@Html.AntiForgeryToken()
+							<input type="hidden" id="conversationId" value="@conversationId" />
+							<div class="mb-3">
+								<label for="quickReplyContent" class="form-label">Quick Reply</label>
+								<textarea class="form-control"
+											id="quickReplyContent"
+											name="content"
+											rows="3"
+											placeholder="Type your reply here..."
+											required></textarea>
+							</div>
+							<button type="submit" class="btn btn-primary">
+								<i class="bi bi-send"></i> Send Reply
+							</button>
+						</form>
+						<div id="replyStatus" class="mt-2"></div>
+					</div>
+				</div>
+			}
+		</div>
+	</div>
+</div>
+
+@section Scripts{
+	<script>
+		//scroll to bottom of messages
+		document.addEventListener('DOMContentLoaded', function(){
+			var messageContainer = document.getElementById('messageContainer');
+			if(messageContainer){
+				messageContainer.scrollTop = messageContainer.scrollHeight;
+			}
+		});
+
+		//quick reply form submission
+		document.getElementById('quickReplyForm')?.addEventListener('submit', async function(e){
+			e.preventDefault();
+
+			const content = document.getElementById('quickReplyContent').value;
+			const conversationId = document.getElementById('conversationId').value;
+			const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+			const statusDiv = document.getElementById('replyStatus');
+
+			try{
+				const response = await fetch('@Url.Action("SendQuickReply", "Messages")',{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'RequestVerificationToken': token
+					},
+					body: JSON.stringify({
+						conversationId: conversationId,
+						content: content,
+						messageType: 'direct'
+					})
+				});
+				const result = await response.json();
+
+				if(result.success){
+					statusDiv.innerHTML = '<div class="alert alert-success">Message sent! Refreshing...</div>';
+					setTimeout(()=>location.reload(), 1000);
+				} else{
+					statusDiv.innerHTML = `<div class="alert alert-danger">${result.message}</div>`;
+				}
+			} catch(error){
+				statusDiv.innerHTML = '<div class="alert alert-danger">An error occurred while sending the message.</div>';
+			}
+		});
+	</script>
+}
