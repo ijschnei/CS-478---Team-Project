@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using CS478_EventPlannerProject.Models;
+//comment for testing github commit, ignore
 namespace CS478_EventPlannerProject.ViewModels
 {
     public class ConversationViewModel
