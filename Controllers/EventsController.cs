@@ -48,20 +48,53 @@ namespace CS478_EventPlannerProject.Controllers
         }
 
         // POST: Events/Create
+        // POST: Events/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("EventName,EventDescription,EventDetails,StartDateTime,EndDateTime,TimeZone,IsAllDay,VenueName,Address,City,State,Country,PostalCode,IsVirtual,VirtualMeetingUrl,MaxAttendees,IsPrivate,RequiresApproval,AllowGuestList,ThemeId,CustomCss,BannerImageUrl")] Events eventModel)
         {
+            // Remove validation for properties that are set automatically
+            ModelState.Remove("CreatorId");
+            ModelState.Remove("Creator");
+            ModelState.Remove("CreatedAt");
+            ModelState.Remove("UpdatedAt");
+
             if (ModelState.IsValid)
             {
                 var currentUser = await _userManager.GetUserAsync(User);
-                if(currentUser != null)
+                if (currentUser != null)
                 {
                     eventModel.CreatorId = currentUser.Id;
-                    await _eventService.CreateEventAsync(eventModel);
-                    return RedirectToAction(nameof(Index));
+                    eventModel.CreatedAt = DateTime.UtcNow;
+                    eventModel.UpdatedAt = DateTime.UtcNow;
+
+                    try
+                    {
+                        await _eventService.CreateEventAsync(eventModel);
+                        TempData["Success"] = "Event created successfully!";
+                        return RedirectToAction(nameof(MyEvents));
+                    }
+                    catch (Exception ex)
+                    {
+                        ModelState.AddModelError("", $"Error creating event: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    ModelState.AddModelError("", "User not found. Please log in again.");
                 }
             }
+            else
+            {
+                // Log validation errors for debugging
+                var errors = ModelState.Values.SelectMany(v => v.Errors);
+                foreach (var error in errors)
+                {
+                    // This will show in the validation summary
+                    System.Diagnostics.Debug.WriteLine($"Validation Error: {error.ErrorMessage}");
+                }
+            }
+
             return View(eventModel);
         }
 
