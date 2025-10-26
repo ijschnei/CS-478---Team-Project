@@ -26,6 +26,27 @@
   <ItemGroup>
     <Folder Include="Controllers\Api\" />
     <Folder Include="ViewModels\" />
+    <Folder Include="wwwroot\images\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\css\aboutus.css" />
+    <None Include="wwwroot\HTML and CSS\aboutus.html" />
+    <None Include="wwwroot\css\account.css" />
+    <None Include="wwwroot\HTML and CSS\account.html" />
+    <None Include="wwwroot\css\calendar.css" />
+    <None Include="wwwroot\HTML and CSS\calendar.html" />
+    <None Include="wwwroot\css\contacts.css" />
+    <None Include="wwwroot\HTML and CSS\contacts.html" />
+    <None Include="wwwroot\css\events.css" />
+    <None Include="wwwroot\HTML and CSS\events.html" />
+    <None Include="wwwroot\HTML and CSS\Feier_Logo_Prototype.png" />
+    <None Include="wwwroot\css\home.css" />
+    <None Include="wwwroot\HTML and CSS\home.html" />
+    <None Include="wwwroot\HTML and CSS\Icon.png" />
+    <None Include="wwwroot\css\register.css" />
+    <None Include="wwwroot\HTML and CSS\register.html" />
+    <None Include="wwwroot\HTML and CSS\temporaryfile" />
   </ItemGroup>
 
 </Project>

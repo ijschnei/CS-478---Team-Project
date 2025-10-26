@@ -91,7 +91,7 @@ app.UseAuthorization();
 //SignalR hubs
 //app.MapHub<ChatHub>("/chatHub");
 
-app.MapFallbackToFile("home.html");
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
