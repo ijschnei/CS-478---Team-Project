@@ -61,15 +61,7 @@
 								<div id="searchResults" class="list-group mt-1" style="display:none;position:absolute;z-index:1000;max-height:300px;overflow-y:auto;width:calc(100% - 30px);"></div>
 								<small class="form-text text-muted">Start typing to search for users by name</small>
 							</div>
-							<!--Receiver selection (need to add user search here as well)-->
-						//	<div class="mb-3">
-						//		<label asp-for="ReceiverId" class="form-label">Recipient User ID</label>
-						//		<input asp-for="ReceiverId" class="form-control" placeholder="Enter recipient user ID" />
-						//		<span asp-validation-for="ReceiverId" class="text-danger"></span>
-						//		<small class="form-text text-muted">
-						//			Note: You'll typically access this page with a pre-selected recipient.'
-						//		</small>
-						//	</div>
+						
 						}
 						@if (Model.RelatedEventId.HasValue && !string.IsNullOrEmpty(Model.EventName))
 						{

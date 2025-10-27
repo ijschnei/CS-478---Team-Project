@@ -199,6 +199,82 @@ namespace CS478_EventPlannerProject.Migrations
                     b.ToTable("EventCustomFields");
                 });
 
+            modelBuilder.Entity("CS478_EventPlannerProject.Models.EventGroupMessageReads", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("MessageId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ReadAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("MessageId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("EventGroupMessageReads");
+                });
+
+            modelBuilder.Entity("CS478_EventPlannerProject.Models.EventGroupMessages", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("EventId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPinned")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MessageType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("SenderId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Subject")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsPinned");
+
+                    b.HasIndex("SenderId");
+
+                    b.HasIndex("EventId", "SentAt");
+
+                    b.ToTable("EventGroupMessages");
+                });
+
             modelBuilder.Entity("CS478_EventPlannerProject.Models.EventTheme", b =>
                 {
                     b.Property<int>("Id")
@@ -240,7 +316,7 @@ namespace CS478_EventPlannerProject.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2025, 9, 5, 18, 48, 25, 546, DateTimeKind.Utc).AddTicks(2292),
+                            CreatedAt = new DateTime(2025, 10, 27, 2, 7, 39, 977, DateTimeKind.Utc).AddTicks(3770),
                             Description = "Clean and professional theme",
                             IsActive = true,
                             IsPremium = false,
@@ -249,7 +325,7 @@ namespace CS478_EventPlannerProject.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2025, 9, 5, 18, 48, 25, 546, DateTimeKind.Utc).AddTicks(2304),
+                            CreatedAt = new DateTime(2025, 10, 27, 2, 7, 39, 977, DateTimeKind.Utc).AddTicks(3776),
                             Description = "Contemporary design with bold colors",
                             IsActive = true,
                             IsPremium = false,
@@ -258,7 +334,7 @@ namespace CS478_EventPlannerProject.Migrations
                         new
                         {
                             Id = 3,
-                            CreatedAt = new DateTime(2025, 9, 5, 18, 48, 25, 546, DateTimeKind.Utc).AddTicks(2306),
+                            CreatedAt = new DateTime(2025, 10, 27, 2, 7, 39, 977, DateTimeKind.Utc).AddTicks(3777),
                             Description = "Sophisticated and refined styling",
                             IsActive = true,
                             IsPremium = true,
@@ -779,6 +855,44 @@ namespace CS478_EventPlannerProject.Migrations
                     b.Navigation("Event");
                 });
 
+            modelBuilder.Entity("CS478_EventPlannerProject.Models.EventGroupMessageReads", b =>
+                {
+                    b.HasOne("CS478_EventPlannerProject.Models.EventGroupMessages", "Message")
+                        .WithMany("MessageReads")
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CS478_EventPlannerProject.Models.Users", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Message");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CS478_EventPlannerProject.Models.EventGroupMessages", b =>
+                {
+                    b.HasOne("CS478_EventPlannerProject.Models.Events", "Event")
+                        .WithMany()
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CS478_EventPlannerProject.Models.Users", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Event");
+
+                    b.Navigation("Sender");
+                });
+
             modelBuilder.Entity("CS478_EventPlannerProject.Models.Events", b =>
                 {
                     b.HasOne("CS478_EventPlannerProject.Models.Users", "Creator")
@@ -888,6 +1002,11 @@ namespace CS478_EventPlannerProject.Migrations
             modelBuilder.Entity("CS478_EventPlannerProject.Models.EventCategory", b =>
                 {
                     b.Navigation("EventMappings");
+                });
+
+            modelBuilder.Entity("CS478_EventPlannerProject.Models.EventGroupMessages", b =>
+                {
+                    b.Navigation("MessageReads");
                 });
 
             modelBuilder.Entity("CS478_EventPlannerProject.Models.EventTheme", b =>

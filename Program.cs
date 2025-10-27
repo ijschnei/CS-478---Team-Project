@@ -60,6 +60,7 @@ builder.Services.AddScoped<IThemeService, ThemeService>();
 builder.Services.AddScoped<ICustomFieldsService, CustomFieldService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddTransient<IEmailSender, EmailSenderService>();
+builder.Services.AddScoped<IEventGroupMessageService, EventGroupMessageService>();
 
 //AutoMapper
 //builder.Services.AddAutoMapper(typeof(Program));
