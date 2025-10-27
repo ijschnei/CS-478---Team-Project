@@ -74,6 +74,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
+    await EventSeeder.SeedEventsAsync(app);
 }
 else
 {
