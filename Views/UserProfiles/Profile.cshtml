@@ -34,8 +34,10 @@
     }
 
     <p><strong>Total Events:</strong> @ViewBag.TotalEvents</p>
-    <a href="@Url.Action("Search")">Search Profiles</a>
-    <a href="@Url.Action("Browse")">Browse Profiles</a>
-    <a href="@Url.Action("Edit")">Edit Profile</a>
-    <a href="@Url.Action("Delete")">Delete Profile</a>
+    <div class="profile-actions">
+        <a href="@Url.Action("Search")" class="search-btn">Search Profiles</a>
+        <a href="@Url.Action("Browse")" class="browse-btn">Browse Profiles</a>
+        <a href="@Url.Action("Edit")" class="edit-btn">Edit Profile</a>
+        <a href="@Url.Action("Delete")" class="delete-btn">Delete Profile</a>
+    </div>
 </div>

@@ -10,88 +10,51 @@
     <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body>
-  <header class="navbar">
-    <div class="logo">
-        <a asp-controller="Home" asp-action="Index">
-            <img src="~/images/Feier_Logo_Prototype.png" alt="Feier Logo">
-        </a>
-    </div>
-    <nav class="menu">
-        <ul>
-            <li><a asp-controller="Events" asp-action="Index">EVENTS</a></li>
-            <li><a asp-controller="CalendarTabs" asp-action="Index">CALENDAR</a></li>
-            <li><a asp-controller="ContactsTabs" asp-action="Index">CONTACTS</a></li>
-            <li><a asp-controller="AboutTabs" asp-action="Index">ABOUT US</a></li>
-        </ul>
-    </nav>
-    <div class="nav-right">
-        <div class="search">
-            <input type="text" placeholder="Search...">
-            <button>Search</button>
-        </div>
-        @if (User.Identity.IsAuthenticated)
-        {
-            <a asp-controller="UserProfiles" asp-action="Profile" class="account-link">My Profile</a>
-            <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline;">
-                <button type="submit" class="account-link">Logout</button>
-            </form>
-
-                        @if (User.Identity.IsAuthenticated)
-                        {
-                            <!-- Events Navigation -->
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Events" asp-action="Index">
-                                    <i class="bi bi-calendar-event"></i> Events
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Events" asp-action="MyEvents">
-                                    <i class="bi bi-calendar-check"></i> My Events
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Events" asp-action="Create">
-                                    <i class="bi bi-plus-circle"></i> Create Event
-                                </a>
-                            </li>
-
-                            <!-- User Profile Navigation -->
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="UserProfiles" asp-action="Profile">
-                                    <i class="bi bi-person-circle"></i> My Profile
-                                </a>
-                            </li>
-
-                            <!-- Logout -->
-                            <li class="nav-item">
-                                <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home")" method="post" class="form-inline">
-                                    <button type="submit" class="nav-link btn btn-link text-dark">
-                                        <i class="bi bi-box-arrow-right"></i> Logout
-                                    </button>
-                                </form>
-                            </li>
-                        }
-                        else
-                        {
-                            <partial name="_LoginPartial" />
-                        }
-                    </ul>
-                </div>
+    <body>
+        <header class="navbar">
+            <div class="logo">
+                <a asp-controller="Home" asp-action="Index">
+                    <img src="~/images/Feier_Logo_Prototype.png" alt="Feier Logo">
+                </a>
             </div>
-        </nav>
-    </header>
+            <nav class="menu">
+                <ul>
+                    <li><a asp-controller="Events" asp-action="Index">EVENTS</a></li>
+                    <li><a asp-controller="CalendarTabs" asp-action="Index">CALENDAR</a></li>
+                    <li><a asp-controller="ContactsTabs" asp-action="Index">CONTACTS</a></li>
+                    <li><a asp-controller="AboutTabs" asp-action="Index">ABOUT US</a></li>
+                </ul>
+            </nav>
+            <div class="nav-right">
+                <div class="search">
+                    <input type="text" placeholder="Search...">
+                    <button>Search</button>
+                </div>
+                @if (User.Identity.IsAuthenticated)
+                {
+                    <a asp-controller="UserProfiles" asp-action="Profile" class="account-link">My Profile</a>
+                    <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline;">
+                        <button type="submit" class="account-link">Logout</button>
+                    </form>
+                }
 
-    <main>
-        @RenderBody()
-    </main>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    
-    <script src="~/js/site.js" asp-append-version="true"></script>
+                else
+                {
+                    <a asp-controller="Account" asp-action="Login" class="account-link">Account</a>
+                }
 
-    @await RenderSectionAsync("Scripts", required: false)
+            </div>
 
-    <script> window.chtlConfig = { chatbotId: "6383742647" } </script>
-    <script async data-id="6383742647" id="chtl-script" type="text/javascript" src="https://chatling.ai/js/embed.js"></script>
-</body>
+        </header>
+
+        <main>
+            @RenderBody()
+        </main>
+
+        <script src="~/lib/jquery/dist/jquery.min.js"></script>
+        <script src="~/js/site.js" asp-append-version="true"></script>
+        @await RenderSectionAsync("Scripts", required: false)
+        <script> window.chtlConfig = { chatbotId: "6383742647" } </script>
+        <script async data-id="6383742647" id="chtl-script" type="text/javascript" src="https://chatling.ai/js/embed.js"></script>
+    </body>
 </html>

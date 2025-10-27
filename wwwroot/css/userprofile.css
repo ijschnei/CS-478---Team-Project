@@ -413,3 +413,188 @@ main > p:last-child {
         margin-right: 0;
     }
 }
+
+/* Profile Action Buttons */
+.profile-actions {
+    text-align: center;
+    margin-top: 30px;
+}
+
+    .profile-actions a {
+        display: inline-block;
+        margin: 10px;
+        padding: 12px 28px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        color: #fff;
+    }
+
+        /* Themed Buttons */
+ .profile-actions a.search-btn {
+  background-color: #00bfa6;
+ }
+
+.profile-actions a.search-btn:hover {
+  background-color: #009e8c;
+  box-shadow: 0px 4px 8px rgba(0, 191, 166, 0.3);
+  transform: translateY(-2px);
+}
+
+.profile-actions a.browse-btn {
+ background-color: #00796b;
+}
+
+.profile-actions a.browse-btn:hover {
+ background-color: #00695c;
+ box-shadow: 0px 4px 8px rgba(0, 121, 107, 0.3);
+ transform: translateY(-2px);
+}
+
+.profile-actions a.edit-btn {
+  background-color: #ffc107;
+  color: #1a3c3c;
+}
+
+.profile-actions a.edit-btn:hover {
+ background-color: #e0a800;
+ color: #fff;
+ box-shadow: 0px 4px 8px rgba(255, 193, 7, 0.3);
+ transform: translateY(-2px);
+}
+
+.profile-actions a.delete-btn {
+  background-color: #dc3545;
+}
+
+.profile-actions a.delete-btn:hover {
+ background-color: #c82333;
+ box-shadow: 0px 4px 8px rgba(220, 53, 69, 0.3);
+ transform: translateY(-2px);
+}
+
+
+/* Browse Profiles Page */
+.browse-container {
+    max-width: 1100px;
+    margin: 40px auto;
+    background: #f7fcfb;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+    .browse-container h2 {
+        text-align: center;
+        color: #1a3c3c;
+        margin-bottom: 30px;
+        font-size: 32px;
+    }
+
+    /* Profile Cards */
+    .browse-container .card {
+        background-color: #ffffff;
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+    }
+
+        .browse-container .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0px 6px 18px rgba(0, 191, 166, 0.25);
+        }
+
+    .browse-container .card-body {
+        text-align: center;
+    }
+
+    .browse-container .card-title a {
+        color: #00796b;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 18px;
+    }
+
+        .browse-container .card-title a:hover {
+            color: #009e8c;
+            text-decoration: underline;
+        }
+
+    /* Circular Image */
+    .browse-container img.rounded-circle {
+        border: 4px solid #00bfa6;
+        box-shadow: 0px 4px 10px rgba(0, 191, 166, 0.2);
+    }
+
+    /* Text */
+    .browse-container p {
+        color: #444;
+        font-size: 15px;
+    }
+
+    .browse-container .text-muted {
+        color: #666 !important;
+    }
+
+    /* Buttons */
+    .browse-container .btn-outline-primary {
+        border-color: #00bfa6;
+        color: #00bfa6;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+
+        .browse-container .btn-outline-primary:hover {
+            background-color: #00bfa6;
+            color: #fff;
+            box-shadow: 0px 4px 8px rgba(0, 191, 166, 0.3);
+            transform: translateY(-2px);
+        }
+
+    .browse-container .btn-primary,
+    .browse-container .btn-secondary {
+        font-weight: bold;
+        border-radius: 8px;
+        transition: 0.3s;
+    }
+
+    .browse-container .btn-primary {
+        background-color: #00bfa6;
+        border: none;
+    }
+
+        .browse-container .btn-primary:hover {
+            background-color: #009e8c;
+            transform: translateY(-2px);
+            box-shadow: 0px 4px 8px rgba(0, 191, 166, 0.3);
+        }
+
+    .browse-container .btn-secondary {
+        background-color: #6c757d;
+        border: none;
+    }
+
+        .browse-container .btn-secondary:hover {
+            background-color: #5a6268;
+            transform: translateY(-2px);
+        }
+
+    /* No Profiles Message */
+    .browse-container .alert-info {
+        background-color: #e0f7f4;
+        color: #1a3c3c;
+        border: 1px solid #00bfa6;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        font-weight: bold;
+    }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .browse-container .card {
+        margin-bottom: 20px;
+    }
+}
