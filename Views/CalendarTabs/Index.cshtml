@@ -1,8 +1,162 @@
 ﻿@{
-    ViewData["Title"] = "CalendarTabs";
+    ViewData["Title"] = "Calendar";
+    var selectedYear = (int)ViewBag.SelectedYear;
+    var selectedMonth = (int)ViewBag.SelectedMonth;
+    var events = ViewBag.Events as List<CS478_EventPlannerProject.Models.Events>;
+
+    var firstDayOfMonth = new DateTime(selectedYear, selectedMonth, 1);
+    var daysInMonth = DateTime.DaysInMonth(selectedYear, selectedMonth);
+    var startDayOfWeek = (int)firstDayOfMonth.DayOfWeek;
+
+    var monthName = firstDayOfMonth.ToString("MMMM yyyy");
+
+    var prevMonth = selectedMonth == 1 ? 12 : selectedMonth - 1;
+    var prevYear = selectedMonth == 1 ? selectedYear - 1 : selectedYear;
+    var nextMonth = selectedMonth == 12 ? 1 : selectedMonth + 1;
+    var nextYear = selectedMonth == 12 ? selectedYear + 1 : selectedYear;
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/calendar.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/calendar.css" />
 
-}
+<div class="calendar-container">
+    <div class="calendar-header">
+        <a asp-action="Index" asp-route-year="@prevYear" asp-route-month="@prevMonth" class="nav-btn">
+            ← Previous
+        </a>
+        <div class="header-center">
+            <h2>@monthName</h2>
+            <button type="button" class="date-picker-btn" onclick="toggleDatePicker()">
+                📅 Select Date
+            </button>
+        </div>
+        <a asp-action="Index" asp-route-year="@nextYear" asp-route-month="@nextMonth" class="nav-btn">
+            Next →
+        </a>
+    </div>
+    
+    <div id="datePickerModal" class="date-picker-modal" style="display: none;">
+        <div class="date-picker-content">
+            <div class="date-picker-header">
+                <h3>Select Year & Month</h3>
+                <button class="close-btn" onclick="toggleDatePicker()">×</button>
+            </div>
+
+            <div class="year-selector">
+                <button onclick="changeYear(-1)" class="year-nav-btn">◄</button>
+                <span id="selectedYear" class="selected-year">@selectedYear</span>
+                <button onclick="changeYear(1)" class="year-nav-btn">►</button>
+            </div>
+
+            <div class="month-grid">
+                @for (int m = 1; m <= 12; m++)
+                {
+                    var monthShortName = new DateTime(selectedYear, m, 1).ToString("MMM");
+                    <button class="month-btn @(m == selectedMonth ? "selected" : "")"
+                            data-month="@m"
+                            onclick="selectMonth(@m)">
+                        @monthShortName
+                    </button>
+                }
+            </div>
+
+            <div class="date-picker-actions">
+                <button class="btn-today" onclick="goToToday()">Today</button>
+                <button class="btn-go" onclick="goToSelectedDate()">Go</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="calendar-weekdays">
+        <div class="weekday">Sun</div>
+        <div class="weekday">Mon</div>
+        <div class="weekday">Tue</div>
+        <div class="weekday">Wed</div>
+        <div class="weekday">Thu</div>
+        <div class="weekday">Fri</div>
+        <div class="weekday">Sat</div>
+    </div>
+
+    <div class="calendar-grid">
+        @for (int i = 0; i < startDayOfWeek; i++)
+        {
+            <div class="calendar-day empty"></div>
+        }
+
+        @for (int day = 1; day <= daysInMonth; day++)
+        {
+            var currentDate = new DateTime(selectedYear, selectedMonth, day);
+            var isToday = currentDate.Date == DateTime.Now.Date;
+            var dayEvents = events?.Where(e => e.StartDateTime.Date == currentDate.Date).ToList() ?? new List<CS478_EventPlannerProject.Models.Events>();
+
+            <div class="calendar-day @(isToday ? "today" : "")">
+                <div class="day-number">@day</div>
+                @if (dayEvents.Any())
+                {
+                    <div class="day-events">
+                        @foreach (var evt in dayEvents.Take(3))
+                        {
+                            <a asp-controller="Events" asp-action="Details" asp-route-id="@evt.EventId"
+                               class="event-item @(evt.IsVirtual ? "virtual" : "physical")"
+                               title="@evt.EventName - @evt.StartDateTime.ToString("h:mm tt")">
+                                <span class="event-time">@evt.StartDateTime.ToString("h:mm tt")</span>
+                                <span class="event-name">@evt.EventName</span>
+                            </a>
+                        }
+                        @if (dayEvents.Count > 3)
+                        {
+                            <div class="more-events">+@(dayEvents.Count - 3) more</div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="calendar-legend">
+        <div class="legend-item">
+            <span class="legend-color physical"></span> Physical Event
+        </div>
+        <div class="legend-item">
+            <span class="legend-color virtual"></span> Virtual Event
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentYear = @selectedYear;
+    let currentMonth = @selectedMonth;
+    let selectedMonthValue = @selectedMonth;
+
+    function toggleDatePicker() {
+        const modal = document.getElementById('datePickerModal');
+        modal.style.display = modal.style.display === 'none' ? 'flex' : 'none';
+    }
+
+    function changeYear(delta) {
+        currentYear += delta;
+        document.getElementById('selectedYear').textContent = currentYear;
+    }
+
+    function selectMonth(month) {
+        selectedMonthValue = month;
+        document.querySelectorAll('.month-btn').forEach(btn => {
+            btn.classList.remove('selected');
+        });
+        event.target.classList.add('selected');
+    }
+
+    function goToToday() {
+        const today = new Date();
+        window.location.href = '@Url.Action("Index", "CalendarTabs")?year=' + today.getFullYear() + '&month=' + (today.getMonth() + 1);
+    }
+
+    function goToSelectedDate() {
+        window.location.href = '@Url.Action("Index", "CalendarTabs")?year=' + currentYear + '&month=' + selectedMonthValue;
+    }
+
+    document.getElementById('datePickerModal')?.addEventListener('click', function(e) {
+        if (e.target === this) {
+            toggleDatePicker();
+        }
+    });
+</script>

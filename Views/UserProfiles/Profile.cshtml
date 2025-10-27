@@ -6,16 +6,17 @@
 
 <link rel="stylesheet" href="~/css/userprofile.css" />
 
+<div class="profile-content-box">
+    <h2>@Model.FullName</h2>
 
-<h2>@Model.FullName</h2>
-<img src="@Model.ProfileImageUrl" alt="Profile Image" width="150" height="150" class="rounded-circle" />
-<p><strong>Display Name:</strong> @Model.DisplayName</p>
-<p><strong>Bio:</strong> @Model.Bio</p>
-<p><strong>Location:</strong> @Model.Location</p>
-<p><strong>Website:</strong> @Model.Website</p>
-<p><strong>Facebook:</strong> <a href="@Model.FacebookUrl" target="_blank">Facebook</a></p>
-<p><strong>Twitter:</strong> <a href="@Model.TwitterUrl" target="_blank">Twitter</a></p>
-<p><strong>LinkedIn:</strong> <a href="@Model.LinkedInUrl" target="_blank">LinkedIn</a></p>
+    <img src="@Model.ProfileImageUrl" alt="Profile Image" width="150" height="150" class="rounded-circle" />
+    <p><strong>Display Name:</strong> @Model.DisplayName</p>
+    <p><strong>Bio:</strong> @Model.Bio</p>
+    <p><strong>Location:</strong> @Model.Location</p>
+    <p><strong>Website:</strong> @Model.Website</p>
+    <p><strong>Facebook:</strong> <a href="@Model.FacebookUrl" target="_blank">Facebook</a></p>
+    <p><strong>Twitter:</strong> <a href="@Model.TwitterUrl" target="_blank">Twitter</a></p>
+    <p><strong>LinkedIn:</strong> <a href="@Model.LinkedInUrl" target="_blank">LinkedIn</a></p>
 
     <h3>Recent Events</h3>
     @if (ViewBag.UserEvents != null && ViewBag.UserEvents.Count > 0)
@@ -23,7 +24,7 @@
         <ul>
             @foreach (var eventItem in ViewBag.UserEvents)
             {
-                <li>@eventItem.EventName</li>
+                <li>@eventItem.Name</li>
             }
         </ul>
     }
@@ -37,5 +38,3 @@
     <a href="@Url.Action("Edit")">Edit Profile</a>
     <a href="@Url.Action("Delete")">Delete Profile</a>
 </div>
-
-
