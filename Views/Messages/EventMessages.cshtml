@@ -1,0 +1,208 @@
+﻿@model IEnumerable<CS478_EventPlannerProject.Models.Messages>
+@{
+	ViewData["Title"] = "Event Messages";
+	var eventItem = ViewBag.Event as CS478_EventPlannerProject.Models.Events;
+	var currentUserId = ViewBag.CurrentUserId as string;
+}
+
+<div class="container mt-4">
+	<div class="row">
+		<div class="col-md-12">
+			<!--Event Header-->
+			<div class="card mb-3">
+				<div class="card-body">
+					<div class="d-flex justify-content-beteen align-items-center">
+						<div>
+							<a asp-controller="Events" asp-action="Details" asp-route-id="@eventItem?.EventId" class="btn btn-sm btn-outline-secondary">
+								<i class="bi bi-arrow-left"></i> Back to Event
+							</a>
+							<h4 class="d-inline ms-3 mb-0">
+								<i class="bi bi-calendar-event"></i> Messages for: @eventItem?.EventName
+							</h4>
+						</div>
+					</div>
+					@if (eventItem != null)
+					{
+						<div class="mt-2">
+							<small class="text-muted">
+								<i class="bi bi-geo-alt"></i> @eventItem.FormattedLocation
+								<span class="ms-3">
+									<i class="bi bi-clock"></i> @eventItem.StartDateTime.ToString("MMM dd, yyyy h:mm tt")
+								</span>
+							</small>
+						</div>
+					}
+				</div>
+			</div>
+			@if (TempData["Success"] != null)
+			{
+				<div class="alert alert-success alert-dismissible fade show" role="alert">
+					@TempData["Success"]
+					<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+				</div>
+			}
+			@if (TempData["Error"] != null)
+			{
+				<div class="alert alert-danger alert-dismissible fade show" role="alert">
+					@TempData["Error"]
+					<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+				</div>
+			}
+
+			<!--Messages List-->
+			@if (!Model.Any())
+			{
+				<div class="alert alert-info">
+					<i class="bi bi-info-circle"></i> No messages related to this event yet.
+				</div>
+			}
+			else
+			{
+				<div class="card">
+					<div class="card-header">
+						<h5 class="mb-0">
+							<i class="bi bi-chat-dots"></i> Event-Related Messages
+							<span class="badge bg-primary">@Model.Count()</span>
+						</h5>
+					</div>
+					<div class="list-group list-group-flush">
+						@{
+							//group messages by conversation
+							var groupedMessages = Model.GroupBy(m => m.ConversationId);
+						}
+						@foreach (var conversation in groupedMessages)
+						{
+							var firstMessage = conversation.OrderBy(m => m.SentAt).First();
+							var lastMessage = conversation.OrderByDescending(m => m.SentAt).First();
+							var messageCount = conversation.Count();
+							var participants = conversation
+								.SelectMany(m => new[] { m.Sender, m.Receiver })
+								.Distinct()
+								.Where(u => u.Id != currentUserId)
+								.ToList();
+							
+								<div class="list-group-item">
+									<div class="d-flex justify-content-between align-items-start mb-2">
+										<div>
+											<h6 class="mb-1">
+											@if (!string.IsNullOrEmpty(firstMessage.Subject))
+											{
+												<strong>@firstMessage.Subject</strong>
+											}
+											else
+											{
+												<text>Conversation with </text>
+												@string.Join(", ", participants.Select(p=> p.Profile?.FullName ?? p.UserName))
+											}
+										</h6>
+										<p class="mb-1 text-muted small">
+											@participants.Count participant@(participants.Count != 1 ? "s" : "") 
+											@messageCount message@(messageCount != 1 ? "s" : "")
+										</p>
+										</div>
+										<div class="text-end">
+											<small class="text-muted">
+												@lastMessage.SentAt.ToString("MMM dd, yyyy")
+											</small>
+											<div class="mt-1">
+												<a asp-action="Conversation" asp-route-conversationId="@conversation.Key" class="btn btn-sm btn-outline-primary">
+													<i class="bi bi-eye"></i> View Thread
+												</a>
+											</div>
+										</div>
+									</div>
+
+									<!--Preview of latest messages-->
+									<div class="border-top pt-2">
+										<small class="text-muted">
+											<strong>@(lastMessage.Sender?.Profile?.FullName ?? lastMessage.Sender?.UserName ?? "Unknown"):</strong>
+											@(lastMessage.Content.Length > 150 ? lastMessage.Content.Substring(0, 150) + "..." : lastMessage.Content)
+										</small>
+									</div>
+								</div>
+						}
+					</div>
+				</div>
+
+				<!--All messages timeline view-->
+				<div class="card mt-4">
+					<div class="card-header">
+						<h5 class="mb-0">
+							<i class="bi bi-clock-history"></i> All Messages Timeline
+						</h5>
+					</div>
+					<div class="card-body" style="max-height: 500px; overflow-y: auto;">
+						@foreach (var message in Model.OrderBy(m => m.SentAt))
+						{
+							var isCurrentUser = message.SenderId == currentUserId;
+
+							<div class="message-item mb-3 pb-3 border-bottom">
+								<div class="d-flex justify-coontent-between align-items-start">
+									<div class="flex-grow-1">
+										<strong class="@(isCurrentUser ? "text-primary" : "")">
+											@(message.Sender?.Profile?.FullName ?? message.Sender?.UserName ?? "Unknown")
+										</strong>
+										<i class="bi bi-arrow-right mx-2"></i>
+										<span>@(message.Receiver?.Profile?.FullName ?? message.Receiver?.UserName ?? "Unknown")</span>
+										@if (!string.IsNullOrEmpty(message.Subject))
+										{
+											<div class="mt-1">
+												<span class="badge bg-secondary">@message.Subject</span>
+											</div>
+										}
+										<p class="mt-2 mb-0">@message.Content</p>
+									</div>
+									<div class="text-end ms-3">
+										<small class="text-muted">
+											@message.SentAt.ToString("MMM dd")
+											<br/>
+											@message.SentAt.ToString("h:mm tt")
+										</small>
+										@if (message.IsRead)
+										{
+											<div class="mt-1">
+												<small class="text-success">
+													<i class="bi bi-check2-all"></i> Read
+												</small>
+											</div>
+										}
+									</div>
+								</div>
+							</div>
+						}
+					</div>
+				</div>
+			}
+
+			<!--Quick actions-->
+			@if (eventItem != null)
+			{
+				<div class="card mt-3">
+					<div class="card-body">
+						<h6 class="card-title">Quick Actions</h6>
+						<div class="btn-group">
+							<a asp-controller="Events" asp-action ="Details" asp-route-id="@eventItem.EventId" class="btn btn-outline-primary">
+								<i class="bi bi-calendar-event"></i> View Event Details
+							</a>
+							<a asp-controller="Events" asp-actions="Attendees" asp-route-id="@eventItem.EventId" class="btn btn-outline-info">
+								<i class="bi bi-people"></i> View Attendees
+							</a>
+						</div>
+					</div>
+				</div>
+			}
+		</div>
+	</div>
+</div>
+
+@section Scripts{
+	<script>
+		//highlight current user's messages
+		document.addEventListener('DOMContentLoaded', function(){
+			const currentUserId = '@currentUserId';
+			document.querySelectorAll('.message-item').forEach(item=>{
+				//for potential additional interactivity TEMP
+			});
+		});
+	</script>
+}

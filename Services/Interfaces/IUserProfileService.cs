@@ -9,5 +9,7 @@ namespace CS478_EventPlannerProject.Services.Interfaces
         Task<UserProfiles> CreateProfileAsync(UserProfiles profile);
         Task<UserProfiles?> UpdateProfileAsync(UserProfiles profile);
         Task<bool> DeleteProfileAsync(string userId);
+        Task<IEnumerable<UserProfiles>> SearchProfilesAsync(string searchTerm);
+        Task<IEnumerable<UserProfiles>> GetAllPublicProfilesAsync();
     }
 }

@@ -1,8 +1,11 @@
 ﻿@model CS478_EventPlannerProject.Models.Events
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<CS478_EventPlannerProject.Models.Users> UserManager
 @{
     ViewData["Title"] = Model.EventName;
-    var currentUserId = User.Identity.IsAuthenticated ? User.Identity.Name : "";
-    var isCreator = Model.Creator?.Email == currentUserId;
+    var currentUserId = UserManager.GetUserId(User);
+    var isCreator = Model.CreatorId == currentUserId;
+    var isAttendee = Model.Attendees.Any(a => a.UserId == currentUserId && a.Status == "accepted");
 }
 
 <div class="container mt-4">
@@ -34,7 +37,17 @@
                     <div class="mt-4">
                         @if (User.Identity.IsAuthenticated)
                         {
-                            @if (!isCreator)
+                            <!--Event Message -Added by Gage-Placeholder for testing need to tweak -->
+                            @if(isCreator || isAttendee)
+                            {
+                                <a asp-controller="Messages"
+                                    asp-action="EventGroupChat"
+                                    asp-route-eventId="@Model.EventId"
+                                    class="btn btn-primary">
+                                     <i class="bi bi-chat-square-text"></i> Event Chat
+                                </a>
+                            }
+                            @if (!isCreator && !isAttendee)
                             {
                                 <form asp-action="Join" asp-route-id="@Model.EventId" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
@@ -43,7 +56,46 @@
                                     </button>
                                 </form>
                             }
+                            <!--RSVP for attendees-->
+                            @if (isAttendee)
+                            {
+                                var userAttendee = Model.Attendees.FirstOrDefault(a=>a.UserId == currentUserId);
+                                @if(userAttendee != null)
+                                {
+                                    <span class="badge bg-success ms-2">
+                                        <i class="bi bi-check-circle"></i> You're attending
+                                    </span>
+                                    
+                                    <div class ="btn-group ms-2" role="group">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                            Change RSVP
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <form asp-action="UpdateRSVP" method="post" class="dropdown-item-form">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="eventId" value="@Model.EventId" />
+                                                    <input type="hidden" name="status" value="tentative" />
+                                                    <button type="submit" class="dropdown-item">
+                                                        <i class="bi bi-question-circle"></i> Tentative
+                                                    </button>
+                                                </form>
+                                            </li>
+                                            <li>
+                                                <form asp-action="UpdateRSVP" method="post" class="dropdown-item-form">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="eventId" value="@Model.EventId" />
+                                                    <input type="hidden" name="status" value="declined" />
+                                                    <button type="submit" class="dropdown-item">
+                                                        <i class="bi bi-x-circle"></i> Decline
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
 
+                                }
+                            }
                             @if (isCreator || User.IsInRole("Admin"))
                             {
                                 <a asp-action="Edit" asp-route-id="@Model.EventId" class="btn btn-warning">
@@ -267,6 +319,17 @@
                             {
                                 <p class="mt-3 mb-0">@Model.Creator.Profile.Bio</p>
                             }
+                            <!--Message Host Button-->
+                            @if(User.Identity.IsAuthenticated && !isCreator)
+                            {
+                                <a asp-controller="Messages"
+                                    asp-action="Compose"
+                                    asp-route-receiverId="@Model.CreatorId"
+                                    asp-route-eventId="@Model.EventId"
+                                    class="btn btn-sm btn-outline-primary mt-3">
+                                    <i class="bi bi-envelope"></i> Message Host
+                                </a>
+                            }
                         }
                         else
                         {
@@ -289,37 +352,46 @@
                         @if (Model.MaxAttendees.HasValue)
                         {
                             <p class="mb-2">
-                                <strong>Capacity:</strong> @Model.Attendees.Count / @Model.MaxAttendees
+                                <strong>Capacity:</strong> @Model.AttendeeCount / @Model.MaxAttendees
                             </p>
                             <div class="progress mb-3">
                                 @{
                                     var percentage = Model.MaxAttendees.Value > 0
-                                    ? (Model.Attendees.Count * 100.0 / Model.MaxAttendees.Value)
+                                    ? (Model.AttendeeCount * 100.0 / Model.MaxAttendees.Value)
                                     : 0;
                                 }
-                                <div class="progress-bar"
+                                <div class="progress-bar @(percentage >= 90 ? "bg-danger" : percentage >= 70 ? "bg-warning" : "bg-success")"
                                      role="progressbar"
                                      style="width: @percentage%"
-                                     aria-valuenow="@Model.Attendees.Count"
+                                     aria-valuenow="@Model.AttendeeCount"
                                      aria-valuemin="0"
                                      aria-valuemax="@Model.MaxAttendees">
+                                     @percentage.ToString("0")%
                                 </div>
                             </div>
                         }
                         else
                         {
                             <p class="mb-2">
-                                <strong>@Model.Attendees.Count</strong> attending
+                                <strong>@Model.AttendeeCount</strong> attending
                             </p>
                         }
 
-                        @if (Model.Attendees.Any())
+                        @if (Model.Attendees.Any(a=>a.Status == "accepted"))
                         {
                             <div class="mt-3">
                                 <ul class="list-unstyled">
-                                    @foreach (var attendee in Model.Attendees.Take(5))
+                                    @foreach (var attendee in Model.Attendees.Where(a=>a.Status =="accepted").Take(5))
                                     {
-                                        <li class="mb-2">
+                                        <li class="mb-2 d-flex align-items-center">
+                                            @if (!string.IsNullOrEmpty(attendee.User?.Profile?.ProfileImageUrl))
+                                            {
+                                                <img src="@attendee.User.Profile.ProfileImageUrl"
+                                                    class="rounded-circle me-2"
+                                                    width="30"
+                                                    height="30"
+                                                    alt="Profile" />
+                                            }
                                             @if (attendee.User?.Profile != null)
                                             {
                                                 <span>@attendee.User.Profile.FullName</span>
@@ -328,14 +400,22 @@
                                             {
                                                 <span>@attendee.User?.Email</span>
                                             }
+                                            @if (attendee.AttendeeType == "organizer")
+                                            {
+                                                <span class="badge bg-warning text-dark ms-2" style="font-size: 0.7rem;">Host</span>
+                                            }
                                         </li>
                                     }
                                 </ul>
-                                @if (Model.Attendees.Count > 5)
+                                @if (Model.AttendeeCount > 5)
                                 {
-                                    <small class="text-muted">and @(Model.Attendees.Count - 5) more...</small>
+                                    <small class="text-muted">and @(Model.AttendeeCount - 5) more...</small>
                                 }
                             </div>
+                        }   
+                        else
+                        {
+                            <p class="text-muted">No confirmed attendees yet. Be the first to join!</p>
                         }
                     </div>
                 </div>
@@ -346,6 +426,13 @@
 
 @section Scripts {
     <script>
-        // Add any additional JavaScript for the details page here
+        // Auto-dismiss success/error messages
+        setTimeout(function() {
+            var alerts = document.querySelectorAll('.alert-dismissible');
+            alerts.forEach(function(alert) {
+                var bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
     </script>
 }

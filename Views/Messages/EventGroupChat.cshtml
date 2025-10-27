@@ -1,0 +1,527 @@
+﻿@model IEnumerable<CS478_EventPlannerProject.Models.EventGroupMessages>
+@{
+    ViewData["Title"] = "Event Group Chat";
+    var eventItem = ViewBag.Event as CS478_EventPlannerProject.Models.Events;
+    var currentUserId = ViewBag.CurrentUserId as string;
+    var isCreator = (bool)(ViewBag.IsCreator ?? false);
+    var unreadCount = (int)(ViewBag.UnreadCount ?? 0);
+    var pinnedMessages = Model.Where(m => m.IsPinned).ToList();
+    var regularMessages = Model.Where(m => !m.IsPinned).ToList();
+}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Main Chat Area -->
+        <div class="col-lg-9">
+            <!-- Event Header -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <a asp-controller="Events" asp-action="Details" asp-route-id="@eventItem?.EventId" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Event
+                            </a>
+                            <h4 class="d-inline ms-3 mb-0">
+                                <i class="bi bi-chat-square-text"></i> @eventItem?.EventName - Group Chat
+                            </h4>
+                            @if (unreadCount > 0)
+                            {
+                                <span class="badge bg-danger ms-2">@unreadCount unread</span>
+                            }
+                        </div>
+                        @if (isCreator)
+                        {
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#announcementModal">
+                                <i class="bi bi-megaphone"></i> Send Announcement
+                            </button>
+                        }
+                    </div>
+                    @if (eventItem != null)
+                    {
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="bi bi-geo-alt"></i> @eventItem.FormattedLocation
+                                <span class="ms-3">
+                                    <i class="bi bi-clock"></i> @eventItem.StartDateTime.ToString("MMM dd, yyyy h:mm tt")
+                                </span>
+                                <span class="ms-3">
+                                    <i class="bi bi-people"></i> @eventItem.AttendeeCount attendee@(eventItem.AttendeeCount != 1 ? "s" : "")
+                                </span>
+                            </small>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <!-- Pinned Messages -->
+            @if (pinnedMessages.Any())
+            {
+                <div class="card mb-3">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0">
+                            <i class="bi bi-pin-angle-fill"></i> Pinned Messages & Announcements
+                        </h6>
+                    </div>
+                    <div class="card-body p-2">
+                        @foreach (var message in pinnedMessages)
+                        {
+                            var isCurrentUser = message.SenderId == currentUserId;
+                            <div class="alert @(message.MessageType == "announcement" ? "alert-info" : "alert-warning") mb-2">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        @if (!string.IsNullOrEmpty(message.Subject))
+                                        {
+                                            <h6 class="alert-heading mb-1">
+                                                @if (message.MessageType == "announcement")
+                                                {
+                                                    <i class="bi bi-megaphone-fill"></i>
+                                                }
+                                                @message.Subject
+                                            </h6>
+                                        }
+                                        <p class="mb-1">@Html.Raw(System.Net.WebUtility.HtmlEncode(message.Content).Replace("\n", "<br/>"))</p>
+                                        <small class="text-muted">
+                                            <strong>@(message.Sender?.Profile?.FullName ?? message.Sender?.UserName ?? "Unknown")</strong>
+                                            • @message.SentAt.ToString("MMM dd, h:mm tt")
+                                        </small>
+                                    </div>
+                                    @if (isCreator)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="unpinMessage(@message.Id)">
+                                            <i class="bi bi-pin-fill"></i> Unpin
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Chat Messages -->
+            <div class="card">
+                <div class="card-body p-3" id="messageContainer" style="height: 500px; overflow-y: auto; background-color: #f8f9fa;">
+                    @if (!regularMessages.Any())
+                    {
+                        <div class="text-center text-muted mt-5">
+                            <i class="bi bi-chat-dots fs-1"></i>
+                            <p>No messages yet. Start the conversation!</p>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var message in regularMessages)
+                        {
+                            var isCurrentUser = message.SenderId == currentUserId;
+                            var alignClass = isCurrentUser ? "justify-content-end" : "justify-content-start";
+                            var bgClass = isCurrentUser ? "bg-primary text-white" : "bg-white";
+                            var timeClass = isCurrentUser ? "text-white-50" : "text-muted";
+
+                            <div class="d-flex @alignClass mb-3" id="message-@message.Id">
+                                @if (!isCurrentUser)
+                                {
+                                    <div class="me-2">
+                                        @if (!string.IsNullOrEmpty(message.Sender?.Profile?.ProfileImageUrl))
+                                        {
+                                            <img src="@message.Sender.Profile.ProfileImageUrl" class="rounded-circle" width="40" height="40" alt="Profile">
+                                        }
+                                        else
+                                        {
+                                            <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                <i class="bi bi-person"></i>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+
+                                <div class="message-bubble @bgClass p-3 rounded shadow-sm" style="max-width: 70%; position: relative;">
+                                    @if (!isCurrentUser)
+                                    {
+                                        <div class="fw-bold mb-1 @(isCurrentUser ? "text-white-50" : "text-primary")">
+                                            @(message.Sender?.Profile?.FullName ?? message.Sender?.UserName ?? "Unknown")
+                                        </div>
+                                    }
+
+                                    <div class="message-content">
+                                        @Html.Raw(System.Net.WebUtility.HtmlEncode(message.Content).Replace("\n", "<br/>"))
+                                    </div>
+
+                                    <div class="mt-2 d-flex justify-content-between align-items-center">
+                                        <small class="@timeClass">
+                                            @message.SentAt.ToString("h:mm tt")
+                                        </small>
+
+                                        @if (isCreator || isCurrentUser)
+                                        {
+                                            <div class="btn-group btn-group-sm">
+                                                @if (isCreator && !isCurrentUser)
+                                                {
+                                                    <button type="button" class="btn btn-sm @(isCurrentUser ? "btn-outline-light" : "btn-outline-secondary")" onclick="pinMessage(@message.Id)" title="Pin message">
+                                                        <i class="bi bi-pin"></i>
+                                                    </button>
+                                                }
+                                                @if (isCreator || isCurrentUser)
+                                                {
+                                                    <button type="button" class="btn btn-sm @(isCurrentUser ? "btn-outline-light" : "btn-outline-danger")" onclick="deleteMessage(@message.Id)" title="Delete message">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+
+                <!-- Message Input -->
+                <div class="card-footer bg-white">
+                    <form id="chatForm" class="d-flex gap-2">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" id="eventId" value="@eventItem?.EventId" />
+                        <textarea class="form-control"
+                                  id="messageContent"
+                                  rows="2"
+                                  placeholder="Type your message... (Press Shift+Enter for new line, Enter to send)"
+                                  required></textarea>
+                        <button type="submit" class="btn btn-primary" style="white-space: nowrap;">
+                            <i class="bi bi-send"></i> Send
+                        </button>
+                    </form>
+                    <div id="messageStatus" class="mt-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-3">
+            <!-- Event Info Card -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-info-circle"></i> Event Info</h6>
+                </div>
+                <div class="card-body">
+                    <p class="small mb-2">
+                        <strong>Creator:</strong><br />
+                        @(eventItem?.Creator?.Profile?.FullName ?? eventItem?.Creator?.UserName ?? "Unknown")
+                    </p>
+                    <p class="small mb-2">
+                        <strong>Status:</strong><br />
+                        @if (eventItem?.IsUpcoming == true)
+                        {
+                            <span class="badge bg-info">Upcoming</span>
+                        }
+                        else if (eventItem?.IsOngoing == true)
+                        {
+                            <span class="badge bg-success">Ongoing</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Past</span>
+                        }
+                    </p>
+                    <p class="small mb-0">
+                        <strong>Attendees:</strong><br />
+                        @eventItem?.AttendeeCount confirmed
+                    </p>
+                </div>
+            </div>
+
+            <!-- Participants Card -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-people"></i> Participants</h6>
+                </div>
+                <div class="card-body p-2" style="max-height: 300px; overflow-y: auto;">
+                    @if (eventItem?.Attendees != null)
+                    {
+                        @foreach (var attendee in eventItem.Attendees.Where(a => a.Status == "accepted").OrderBy(a => a.AttendeeType))
+                        {
+                            <div class="d-flex align-items-center mb-2 p-1">
+                                @if (!string.IsNullOrEmpty(attendee.User?.Profile?.ProfileImageUrl))
+                                {
+                                    <img src="@attendee.User.Profile.ProfileImageUrl" class="rounded-circle me-2" width="30" height="30" alt="Profile">
+                                }
+                                else
+                                {
+                                    <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px; font-size: 0.75rem;">
+                                        <i class="bi bi-person"></i>
+                                    </div>
+                                }
+                                <div class="flex-grow-1">
+                                    <div class="small">
+                                        <strong>@(attendee.User?.Profile?.FullName ?? attendee.User?.UserName ?? "Unknown")</strong>
+                                        @if (attendee.AttendeeType == "organizer")
+                                        {
+                                            <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">Organizer</span>
+                                        }
+                                        else if (attendee.AttendeeType == "co-organizer")
+                                        {
+                                            <span class="badge bg-info" style="font-size: 0.65rem;">Co-Org</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <!-- Guidelines Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-shield-check"></i> Guidelines</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="small mb-0 ps-3">
+                        <li>Be respectful to all participants</li>
+                        <li>Stay on topic about the event</li>
+                        <li>No spam or promotional content</li>
+                        @if (isCreator)
+                        {
+                            <li class="text-primary mt-2"><strong>As creator, you can:</strong></li>
+                            <li>Send announcements to all</li>
+                            <li>Pin/unpin important messages</li>
+                            <li>Delete any message</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Announcement Modal (Creator Only) -->
+@if (isCreator)
+{
+    <div class="modal fade" id="announcementModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form asp-action="SendAnnouncement" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="eventId" value="@eventItem?.EventId" />
+
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="bi bi-megaphone"></i> Send Announcement
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> Announcements are automatically pinned and visible to all attendees.
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="announcementSubject" class="form-label">Subject <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="announcementSubject" name="subject" placeholder="e.g., Venue Change, Time Update" required maxlength="200" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="announcementContent" class="form-label">Message <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="announcementContent" name="content" rows="5" placeholder="Enter your announcement details..." required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-megaphone"></i> Send to All Attendees
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        const eventId = @eventItem?.EventId;
+        const currentUserId = '@currentUserId';
+        const isCreator = @Json.Serialize(isCreator);
+        let messageContainer = document.getElementById('messageContainer');
+        let lastMessageCount = @Model.Count();
+
+        // Scroll to bottom on load
+        document.addEventListener('DOMContentLoaded', function() {
+            scrollToBottom();
+        });
+
+        function scrollToBottom() {
+            if (messageContainer) {
+                messageContainer.scrollTop = messageContainer.scrollHeight;
+            }
+        }
+
+        // Chat form submission
+        document.getElementById('chatForm')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const content = document.getElementById('messageContent').value.trim();
+            if (!content) return;
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            const statusDiv = document.getElementById('messageStatus');
+            const submitBtn = this.querySelector('button[type="submit"]');
+
+            // Disable button during submission
+            submitBtn.disabled = true;
+
+            try {
+                const formData = new FormData();
+                formData.append('eventId', eventId);
+                formData.append('content', content);
+                formData.append('messageType', 'chat');
+                formData.append('__RequestVerificationToken', token);
+
+                const response = await fetch('@Url.Action("SendGroupMessage", "Messages")', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('messageContent').value = '';
+                    statusDiv.innerHTML = '<div class="alert alert-success alert-dismissible fade show py-1">Message sent!</div>';
+                    setTimeout(() => { statusDiv.innerHTML = ''; }, 3000);
+
+                    // Reload page to show new message
+                    setTimeout(() => location.reload(), 500);
+                } else {
+                    statusDiv.innerHTML = `<div class="alert alert-danger py-1">${result.message}</div>`;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '<div class="alert alert-danger py-1">An error occurred while sending the message.</div>';
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Handle Enter key (Send) vs Shift+Enter (New line)
+        document.getElementById('messageContent')?.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('chatForm').dispatchEvent(new Event('submit'));
+            }
+        });
+
+        // Pin message function
+        async function pinMessage(messageId) {
+            if (!confirm('Pin this message for all participants to see?')) return;
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            try {
+                const formData = new FormData();
+                formData.append('messageId', messageId);
+                formData.append('eventId', eventId);
+                formData.append('__RequestVerificationToken', token);
+
+                const response = await fetch('@Url.Action("PinMessage", "Messages")', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert(result.message);
+                }
+            } catch (error) {
+                alert('An error occurred while pinning the message.');
+            }
+        }
+
+        // Unpin message function
+        async function unpinMessage(messageId) {
+            if (!confirm('Unpin this message?')) return;
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            try {
+                const formData = new FormData();
+                formData.append('messageId', messageId);
+                formData.append('eventId', eventId);
+                formData.append('__RequestVerificationToken', token);
+
+                const response = await fetch('@Url.Action("UnpinMessage", "Messages")', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert(result.message);
+                }
+            } catch (error) {
+                alert('An error occurred while unpinning the message.');
+            }
+        }
+
+        // Delete message function
+        async function deleteMessage(messageId) {
+            if (!confirm('Are you sure you want to delete this message?')) return;
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            try {
+                const formData = new FormData();
+                formData.append('messageId', messageId);
+                formData.append('eventId', eventId);
+                formData.append('__RequestVerificationToken', token);
+
+                const response = await fetch('@Url.Action("DeleteGroupMessage", "Messages")', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById(`message-${messageId}`).remove();
+                } else {
+                    alert(result.message);
+                }
+            } catch (error) {
+                alert('An error occurred while deleting the message.');
+            }
+        }
+
+        // Auto-refresh messages every 10 seconds
+        setInterval(function() {
+            // Simple refresh 
+            fetch(`@Url.Action("EventGroupChat", "Messages")?eventId=${eventId}`)
+                .then(response => {
+                    // Check if there are new messages by comparing count
+                  
+                    console.log('Checking for new messages...');
+                })
+                .catch(error => console.error('Error checking for new messages:', error));
+        }, 10000);
+    </script>
+}

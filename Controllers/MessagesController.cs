@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using CS478_EventPlannerProject.Models;
 using CS478_EventPlannerProject.Services.Interfaces;
+using CS478_EventPlannerProject.ViewModels;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 
 namespace CS478_EventPlannerProject.Controllers
 {
@@ -12,11 +14,13 @@ namespace CS478_EventPlannerProject.Controllers
         private readonly IMessageService _messageService;
         private readonly UserManager<Users> _userManager;
         private readonly IEventService _eventService;
-        public MessagesController(IMessageService messageService, UserManager<Users> userManager, IEventService eventService)
+        private readonly IEventGroupMessageService _eventGroupMessageService;
+        public MessagesController(IMessageService messageService, UserManager<Users> userManager, IEventService eventService, IEventGroupMessageService eventGroupMessageService)
         {
             _messageService = messageService;
             _userManager = userManager;
             _eventService = eventService;
+            _eventGroupMessageService = eventGroupMessageService;
         }
         // GET: Messages
         public async Task<IActionResult> Index()
@@ -302,32 +306,195 @@ namespace CS478_EventPlannerProject.Controllers
                 return Json(new { success = false, message = "An error occurred while sending the message." });
             }
         }
-    }
-    //View Models
-    public class ConversationViewModel
-    {
-        public Guid ConversationId { get; set; }
-        public Messages LastMessage { get; set; }
-        public int UnreadCount { get; set; }
-        public int MessageCount { get; set; }
-    }
 
-    public class ComposeMessageViewModel
-    {
-        public string ReceiverId { get; set; } = string.Empty;
-        public string? ReceiverName { get; set; }
-        public string? Subject { get; set; }
-        public string Content { get; set; } = string.Empty;
-        public string? MessageType { get; set; } = "direct";
-        public int? RelatedEventId { get; set; }
-        public string? EventName { get; set; }
-    }
+        //Group Event Messages Additions VVVV
+        // GET: Messages/EventGroupChat/5
+        public async Task<IActionResult> EventGroupChat(int eventId)
+        {
+            if (eventId <= 0)
+                return BadRequest();
+            try
+            {
+                var currentUser = await _userManager.GetUserAsync(User);
+                if (currentUser == null)
+                    return RedirectToAction("Login", "Account");
 
-    public class QuickReplyModel
-    {
-        public Guid ConversationId { get; set; }
-        public string Content { get; set; } = string.Empty;
-        public string? MessageType { get; set; }
-        public int? RelatedEventId { get; set; }
+                //verify user has access to this event
+                var eventItem = await _eventService.GetEventByIdAsync(eventId);
+                if (eventItem == null)
+                    return NotFound();
+
+                //check if user is the creator or an accepted attendee
+                var isCreator = eventItem.CreatorId == currentUser.Id;
+                var isAttendee = eventItem.Attendees.Any(a => a.UserId == currentUser.Id && a.Status == "accepted");
+
+                if (!isCreator && !isAttendee && !User.IsInRole("Admin"))
+                {
+                    TempData["Error"] = "Only confirmed attendees can access the event group chat.";
+                    return RedirectToAction("Details", "Events", new { id = eventId });
+                }
+
+                var messages = await _eventGroupMessageService.GetEventGroupMessagesAsync(eventId);
+                var unreadCount = await _eventGroupMessageService.GetUnreadCountForEventAsync(eventId, currentUser.Id);
+
+                ViewBag.Event = eventItem;
+                ViewBag.CurrentUserId = currentUser.Id;
+                ViewBag.IsCreator = isCreator;
+                ViewBag.UnreadCount = unreadCount;
+
+                return View(messages);
+            }
+            catch(Exception)
+            {
+                TempData["Error"] = "Failed to load event group chat.";
+                return RedirectToAction("Details", "Events", new { id = eventId });
+            }
+        }
+
+        // POST: Messages/SendGroupMessage
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendGroupMessage(int eventId, string content, string? messageType = "chat")
+        {
+            if (eventId <= 0 || string.IsNullOrWhiteSpace(content))
+                return Json(new { success = false, message = "Invalid message data." });
+
+            try
+            {
+                var currentUser = await _userManager.GetUserAsync(User);
+                if (currentUser == null)
+                    return Json(new { success = false, message = "User not authenticated" });
+
+                var message = new EventGroupMessages
+                {
+                    EventId = eventId,
+                    SenderId = currentUser.Id,
+                    Content = content,
+                    MessageType = messageType ?? "chat"
+                };
+                var sentMessage = await _eventGroupMessageService.SendGroupMessageAsync(message);
+
+                return Json(new
+                {
+                    success = true,
+                    message = "Message sent successfully!",
+                    messageId = sentMessage.Id,
+                    timestamp = sentMessage.SentAt.ToString("yyyy-MM-dd HH:mm:ss"),
+                    senderName = currentUser.Profile?.FullName ?? currentUser.UserName,
+                    messageType = sentMessage.MessageType
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return Json(new { success = false, message = "An error occurred while sending the message." });
+            }
+        }
+
+        // POST: Messages/SendAnnouncement
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendAnnouncement(int eventId, string subject, string content)
+        {
+            if (eventId <= 0 || string.IsNullOrWhiteSpace(content))
+            {
+                TempData["Error"] = "Subject and content are required.";
+                return RedirectToAction(nameof(EventGroupChat), new { eventId });
+            }
+
+            try
+            {
+                var currentUser = await _userManager.GetUserAsync(User);
+                if (currentUser == null)
+                    return RedirectToAction("Login", "Account");
+
+                await _eventGroupMessageService.SendAnnouncementAsync(eventId, currentUser.Id, subject, content);
+                TempData["Success"] = "Announcement sent successfully!";
+                return RedirectToAction(nameof(EventGroupChat), new { eventId });
+            }
+            catch(InvalidOperationException ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction(nameof(EventGroupChat), new { eventId });
+            }
+            catch (Exception)
+            {
+                TempData["Error"] = "An error occurred while sending the announcement.";
+                return RedirectToAction(nameof(EventGroupChat), new { eventId });
+            }
+        }
+
+        // POST: Messages/PinMessage
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PinMessage(int messageId, int eventId)
+        {
+            try
+            {
+                var currentUser = await _userManager.GetUserAsync(User);
+                if (currentUser == null)
+                    return Json(new { success = false, message = "User is not authenticated." });
+
+                var success = await _eventGroupMessageService.PinMessageAsync(messageId, currentUser.Id);
+                if (success)
+                    return Json(new { success = true, message = "Message pinned successfully." });
+
+                return Json(new { success = false, message = "Failed to pin message." });
+            }
+            catch (Exception)
+            {
+                return Json(new { success = false, message = "An error occurred" });
+            }
+        }
+
+        // POST: Messages/UnpinMessage
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UnpinMessage(int messageId, int eventId)
+        {
+            try
+            {
+                var currentUser = await _userManager.GetUserAsync(User);
+                if (currentUser == null)
+                    return Json(new { success = false, message = "User is not authenticated." });
+
+                var success = await _eventGroupMessageService.UnpinMessageAsync(messageId, currentUser.Id);
+                if (success)
+                    return Json(new { success = true, message = "Message unpinned successfully." });
+
+                return Json(new { success = false, message = "Failed to unpin message." });
+            }
+            catch (Exception)
+            {
+                return Json(new { success = false, message = "An error occurred" });
+            }
+        }
+
+        // POST: Messages/DeleteGroupMessage
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteGroupMessage(int messageId, int eventId)
+        {
+            try
+            {
+                var currentUser = await _userManager.GetUserAsync(User);
+                if (currentUser == null)
+                    return Json(new { success = false, message = "User not authenticated." });
+
+                var success = await _eventGroupMessageService.DeleteMessageAsync(messageId, currentUser.Id);
+                if (success)
+                    return Json(new { success = true, message = "Message deleted successfully." });
+
+                return Json(new { success = false, message = "Failed to delete message." });
+            }
+            catch (Exception)
+            {
+                return Json(new { success = false, message = "An error occurred" });
+            }
+        }
     }
+ 
 }
