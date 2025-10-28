@@ -1,95 +1,161 @@
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Times New Roman', serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Times New Roman', serif;
 }
 
-.navbar {
-  background-color: #dbf7f3;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 15px 40px;
+body {
+    background-color: #f7fcfb;
 }
 
-.logo img {
-  height: 70px;
-  width: auto;
-  transition: transform 0.2s ease;
+.about-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
 }
 
-.logo img:hover {
-  transform: scale(1.05);
+.about-hero {
+    text-align: center;
+    padding: 60px 20px;
+    background: rgba(0, 191, 166, 0.3);
+    border-radius: 12px;
+    margin-bottom: 50px;
+    box-shadow: 0px 8px 20px rgba(0, 191, 166, 0.3);
 }
 
-.menu ul {
-  display: flex;
-  list-style: none;
-  margin: 0;
-  padding: 0;
+    .about-hero h1 {
+        font-size: 48px;
+        color: white;
+        font-weight: bold;
+    }
+
+.about-content {
+    background: white;
+    padding: 50px;
+    border-radius: 12px;
+    margin-bottom: 50px;
+    box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.1);
 }
 
-.menu ul li {
-  margin-left: 30px;
+    .about-content h2 {
+        color: #1a3c3c;
+        font-size: 36px;
+        margin-bottom: 25px;
+        text-align: center;
+    }
+
+.about-description {
+    font-size: 18px;
+    line-height: 1.8;
+    color: #444;
+    text-align: left;
+    max-width: 1000px;
+    margin: 0 auto;
 }
 
-.menu ul li a {
-  text-decoration: none;
-  color: white;
-  font-weight: bold;
-  font-size: 25px;
-  transition: color 0.3s ease;
+.team-section {
+    margin-bottom: 50px;
 }
 
-.menu ul li a:hover {
-  color: #00796b;
+    .team-section h2 {
+        color: #1a3c3c;
+        font-size: 36px;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+.team-intro {
+    text-align: center;
+    font-size: 18px;
+    color: #666;
+    margin-bottom: 40px;
 }
 
-.nav-right {
-  display: flex;
-  align-items: center;
-  gap: 15px;
+.team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 30px;
+    margin-top: 30px;
 }
 
-.search {
-  display: flex;
-  align-items: center;
+.team-card {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.1);
+    transition: 0.3s;
+    text-align: center;
 }
 
-.search input {
-  padding: 6px 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  outline: none;
+    .team-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0px 12px 25px rgba(0, 191, 166, 0.3);
+    }
+
+.team-image {
+    margin-bottom: 20px;
 }
 
-.search button {
-  margin-left: 8px;
-  padding: 6px 12px;
-  background-color: #00796b;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s ease;
+.image-placeholder {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: #00bfa6;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    color: white;
+    font-weight: bold;
+    box-shadow: 0px 4px 10px rgba(0, 191, 166, 0.3);
 }
 
-.search button:hover {
-  background-color: #005f53;
+.team-info h3 {
+    color: #1a3c3c;
+    font-size: 24px;
+    margin-bottom: 8px;
 }
 
-.account-link {
-  background-color: #00bfa6;
-  color: white;
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-weight: bold;
-  text-decoration: none;
-  transition: background-color 0.3s ease;
+.role {
+    color: #00bfa6;
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 15px;
 }
 
-.account-link:hover {
-  background-color: #009e8c;
+.contribution {
+    color: #666;
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    min-height: 80px;
+}
+
+@media (max-width: 768px) {
+    .about-hero {
+        padding: 40px 20px;
+    }
+
+        .about-hero h1 {
+            font-size: 32px;
+        }
+
+    .about-content {
+        padding: 30px 20px;
+    }
+
+        .about-content h2,
+        .team-section h2 {
+            font-size: 28px;
+        }
+
+    .about-description {
+        font-size: 16px;
+    }
+
+    .team-grid {
+        grid-template-columns: 1fr;
+    }
 }
