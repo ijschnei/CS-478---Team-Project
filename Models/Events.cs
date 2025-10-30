@@ -100,5 +100,4 @@ namespace CS478_EventPlannerProject.Models
             !string.IsNullOrEmpty(VenueName) ? $"{VenueName}, {City}" :
             !string.IsNullOrEmpty(City) ? $"{City}, {State}" : "Location TBD";
     }
-
 }
