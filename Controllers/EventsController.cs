@@ -48,16 +48,17 @@ namespace CS478_EventPlannerProject.Controllers
         }
 
         // POST: Events/Create
-        // POST: Events/Create
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("EventName,EventDescription,EventDetails,StartDateTime,EndDateTime,TimeZone,IsAllDay,VenueName,Address,City,State,Country,PostalCode,IsVirtual,VirtualMeetingUrl,MaxAttendees,IsPrivate,RequiresApproval,AllowGuestList,ThemeId,CustomCss,BannerImageUrl")] Events eventModel)
+        public async Task<IActionResult> Create(Events eventModel)
         {
             // Remove validation for properties that are set automatically
             ModelState.Remove("CreatorId");
             ModelState.Remove("Creator");
             ModelState.Remove("CreatedAt");
             ModelState.Remove("UpdatedAt");
+            ModelState.Remove("BannerImageFile");
 
             if (ModelState.IsValid)
             {
@@ -70,6 +71,23 @@ namespace CS478_EventPlannerProject.Controllers
 
                     try
                     {
+                        // Handle file upload
+                        if (eventModel.BannerImageFile != null && eventModel.BannerImageFile.Length > 0)
+                        {
+                            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "events");
+                            Directory.CreateDirectory(uploadsFolder);
+
+                            var uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(eventModel.BannerImageFile.FileName);
+                            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                            using (var fileStream = new FileStream(filePath, FileMode.Create))
+                            {
+                                await eventModel.BannerImageFile.CopyToAsync(fileStream);
+                            }
+
+                            eventModel.BannerImageUrl = "/images/events/" + uniqueFileName;
+                        }
+
                         await _eventService.CreateEventAsync(eventModel);
                         TempData["Success"] = "Event created successfully!";
                         return RedirectToAction(nameof(MyEvents));
@@ -117,12 +135,19 @@ namespace CS478_EventPlannerProject.Controllers
         // POST: Events/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("EventName,EventDescription,EventDetails,StartDateTime,EndDateTime,TimeZone,IsAllDay,VenueName,Address,City,State,Country,PostalCode,IsVirtual,VirtualMeetingUrl,MaxAttendees,IsPrivate,RequiresApproval,AllowGuestList,ThemeId,CustomCss,BannerImageUrl")] Events eventModel)
+        public async Task<IActionResult> Edit(int id, Events eventModel)
         {
             if (id != eventModel.EventId)
             {
                 return NotFound();
             }
+
+            // Remove validation for properties that shouldn't be validated
+            ModelState.Remove("Creator");
+            ModelState.Remove("CreatedAt");
+            ModelState.Remove("UpdatedAt");
+            ModelState.Remove("BannerImageFile");
+
             if (ModelState.IsValid)
             {
                 var currentUser = await _userManager.GetUserAsync(User);
@@ -130,13 +155,48 @@ namespace CS478_EventPlannerProject.Controllers
                 {
                     return Forbid();
                 }
-                var updatedEvent = await _eventService.UpdateEventAsync(eventModel);
-                if (updatedEvent != null)
+
+                try
                 {
-                    return RedirectToAction(nameof(Index));
+                    if (eventModel.BannerImageFile != null && eventModel.BannerImageFile.Length > 0)
+                    {
+                        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "events");
+                        Directory.CreateDirectory(uploadsFolder);
+
+                        var uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(eventModel.BannerImageFile.FileName);
+                        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                        using (var fileStream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await eventModel.BannerImageFile.CopyToAsync(fileStream);
+                        }
+
+                        if (!string.IsNullOrEmpty(eventModel.BannerImageUrl) && eventModel.BannerImageUrl.StartsWith("/images/"))
+                        {
+                            var oldImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", eventModel.BannerImageUrl.TrimStart('/'));
+                            if (System.IO.File.Exists(oldImagePath))
+                            {
+                                System.IO.File.Delete(oldImagePath);
+                            }
+                        }
+
+                        eventModel.BannerImageUrl = "/images/events/" + uniqueFileName;
+                    }
+
+                    var updatedEvent = await _eventService.UpdateEventAsync(eventModel);
+                    if (updatedEvent != null)
+                    {
+                        TempData["Success"] = "Event updated successfully!";
+                        return RedirectToAction(nameof(Details), new { id = eventModel.EventId });
+                    }
+                    return NotFound();
                 }
-                return NotFound();
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", $"Error updating event: {ex.Message}");
+                }
             }
+
             return View(eventModel);
         }
 
@@ -144,7 +204,7 @@ namespace CS478_EventPlannerProject.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var eventItem = await _eventService.GetEventByIdAsync(id);
-            if(eventItem == null)
+            if (eventItem == null)
             {
                 return NotFound();
             }
@@ -159,21 +219,21 @@ namespace CS478_EventPlannerProject.Controllers
         // POST: Events/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task <IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var eventItem = await _eventService.GetEventByIdAsync(id);
-            if(eventItem == null)
+            if (eventItem == null)
             {
                 return NotFound();
             }
             var currentUser = await _userManager.GetUserAsync(User);
-            if(currentUser?.Id != eventItem.CreatorId && !User.IsInRole("Admin"))
+            if (currentUser?.Id != eventItem.CreatorId && !User.IsInRole("Admin"))
             {
                 return Forbid();
             }
             await _eventService.DeleteEventAsync(id);
             return RedirectToAction(nameof(Index));
-           
+
         }
 
         // GET: Events/MyEvents
@@ -244,5 +304,7 @@ namespace CS478_EventPlannerProject.Controllers
             ViewBag.CategoryId = categoryId;
             return View(events);
         }
+
     }
+
 }
