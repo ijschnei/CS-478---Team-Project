@@ -1,353 +1,151 @@
 ﻿@model CS478_EventPlannerProject.Models.Events
 @{
-    ViewData["Title"] = Model.EventName;
-    var currentUserId = User.Identity.IsAuthenticated ? User.Identity.Name : "";
-    var isCreator = Model.Creator?.Email == currentUserId;
+    ViewData["Title"] = "Delete Event";
 }
 
 <link rel="stylesheet" href="~/css/events.css" />
 
 <div class="container mt-4">
-    <div class="row">
-        <div class="col-md-8">
-            <!-- Event Header -->
-            <div class="card mb-4">
-                @if (!string.IsNullOrEmpty(Model.BannerImageUrl))
-                {
-                    <img src="@Model.BannerImageUrl" class="card-img-top" alt="@Model.EventName">
-                }
-                <div class="card-body">
-                    <h1 class="card-title">@Model.EventName</h1>
+    <div class="alert alert-danger">
+        <h4 class="alert-heading">
+            <i class="bi bi-exclamation-triangle"></i> Delete Event
+        </h4>
+        <p>Are you sure you want to delete this event? This action cannot be undone.</p>
+    </div>
 
-                    @if (!string.IsNullOrEmpty(Model.EventDescription))
-                    {
-                        <p class="lead">@Model.EventDescription</p>
-                    }
-
-                    @if (!string.IsNullOrEmpty(Model.EventDetails))
-                    {
-                        <div class="mt-3">
-                            <h5>Event Details</h5>
-                            <p>@Model.EventDetails</p>
-                        </div>
-                    }
-
-                    <!-- Action Buttons -->
-                    <div class="mt-4">
-                        @if (User.Identity.IsAuthenticated)
-                        {
-                            @if (!isCreator)
-                            {
-                                <form asp-action="Join" asp-route-id="@Model.EventId" method="post" class="d-inline">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-success">
-                                        <i class="bi bi-calendar-check"></i> Join Event
-                                    </button>
-                                </form>
-                            }
-
-                            @if (isCreator || User.IsInRole("Admin"))
-                            {
-                                <a asp-action="Edit" asp-route-id="@Model.EventId" class="btn btn-warning">
-                                    <i class="bi bi-pencil"></i> Edit
-                                </a>
-                                <a asp-action="Delete" asp-route-id="@Model.EventId" class="btn btn-danger">
-                                    <i class="bi bi-trash"></i> Delete
-                                </a>
-                                <a asp-action="Attendees" asp-route-id="@Model.EventId" class="btn btn-info">
-                                    <i class="bi bi-people"></i> Manage Attendees
-                                </a>
-                            }
-                        }
-                        else
-                        {
-                            <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-primary">
-                                Login to Join Event
-                            </a>
-                        }
-
-                        <a asp-action="Index" class="btn btn-secondary">
-                            <i class="bi bi-arrow-left"></i> Back to Events
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Additional Information -->
-            <div class="card">
-                <div class="card-header">
-                    <h5>Additional Information</h5>
-                </div>
-                <div class="card-body">
-                    @if (Model.MaxAttendees.HasValue)
-                    {
-                        <div class="alert alert-info">
-                            <strong>Capacity:</strong> Limited to @Model.MaxAttendees attendees
-                        </div>
-                    }
-
-                    @if (Model.RequiresApproval)
-                    {
-                        <div class="alert alert-warning">
-                            <i class="bi bi-exclamation-triangle"></i> This event requires approval to join
-                        </div>
-                    }
-
-                    @if (Model.IsPrivate)
-                    {
-                        <div class="alert alert-secondary">
-                            <i class="bi bi-lock"></i> This is a private event
-                        </div>
-                    }
-                </div>
-            </div>
+    <div class="card">
+        <div class="card-header bg-dark text-white">
+            <h3 class="mb-0">@Model.EventName</h3>
         </div>
+        <div class="card-body">
+            @if (!string.IsNullOrEmpty(Model.BannerImageUrl))
+            {
+                <img src="@Model.BannerImageUrl" class="img-fluid mb-3" alt="@Model.EventName" style="max-height: 200px; object-fit: cover;">
+            }
 
-        <!-- Sidebar -->
-        <div class="col-md-4">
-            <!-- Date & Time Card -->
-            <div class="card mb-3">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">
-                        <i class="bi bi-calendar-event"></i> Date & Time
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-2">
-                        <strong>Start:</strong><br />
-                        @if (Model.IsAllDay)
-                        {
-                            <span>@Model.StartDateTime.ToString("dddd, MMMM dd, yyyy") (All Day)</span>
-                        }
-                        else
-                        {
-                            <span>@Model.StartDateTime.ToString("dddd, MMMM dd, yyyy")</span>
-                        
-                            <br />
-                            <span>@Model.StartDateTime.ToString("h:mm tt")</span>
-                        }
-                    </div>
+            <dl class="row">
+                <dt class="col-sm-3">Event Name</dt>
+                <dd class="col-sm-9">@Model.EventName</dd>
 
-                    <div class="mb-2">
-                        <strong>End:</strong><br />
-                        @if (Model.EndDateTime.HasValue)
-                        {
-                            @if (Model.IsAllDay)
-                            {
-                                <span>@Model.EndDateTime.Value.ToString("dddd, MMMM dd, yyyy") (All Day)</span>
-                            }
-                            else
-                            {
-                                <span>@Model.EndDateTime.Value.ToString("dddd, MMMM dd, yyyy")</span>
-                        
-                                <br />
-                                <span>@Model.EndDateTime.Value.ToString("h:mm tt")</span>
-                            }
-                        }
-                        else
-                        {
-                            <span class="text-muted">Not specified</span>
-                        }
-                    </div>
+                @if (!string.IsNullOrEmpty(Model.EventDescription))
+                {
+                    <dt class="col-sm-3">Description</dt>
+                    <dd class="col-sm-9">@Model.EventDescription</dd>
+                }
 
-                    @if (!string.IsNullOrEmpty(Model.TimeZone))
+                <dt class="col-sm-3">Start Date & Time</dt>
+                <dd class="col-sm-9">
+                    @Model.StartDateTime.ToString("dddd, MMMM dd, yyyy h:mm tt")
+                    @if (Model.IsAllDay)
                     {
-                        <div class="mb-2">
-                            <strong>Time Zone:</strong> @Model.TimeZone
-                        </div>
+                        <span class="badge bg-info">All Day</span>
                     }
+                </dd>
 
-                    @if (Model.EndDateTime.HasValue)
-                    {
-                        var duration = Model.EndDateTime.Value - Model.StartDateTime;
-                        var durationText = "";
-                        if (duration.TotalDays >= 1)
-                        {
-                            durationText = $"{duration.Days} day(s) {duration.Hours} hour(s)";
-                        }
-                        else if (duration.TotalHours >= 1)
-                        {
-                            durationText = $"{duration.Hours} hour(s) {duration.Minutes} min";
-                        }
-                        else
-                        {
-                            durationText = $"{duration.Minutes} minutes";
-                        }
-                        <div>
-                            <strong>Duration:</strong> @durationText
-                        </div>
-                    }
-                </div>
-            </div>
+                @if (Model.EndDateTime.HasValue)
+                {
+                    <dt class="col-sm-3">End Date & Time</dt>
+                    <dd class="col-sm-9">@Model.EndDateTime.Value.ToString("dddd, MMMM dd, yyyy h:mm tt")</dd>
+                }
 
-            <!-- Location Card -->
-            <div class="card mb-3">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">
-                        <i class="bi bi-geo-alt"></i> Location
-                    </h5>
-                </div>
-                <div class="card-body">
+                <dt class="col-sm-3">Location</dt>
+                <dd class="col-sm-9">
                     @if (Model.IsVirtual)
                     {
-                        <p><strong>Virtual Event</strong></p>
+                        <span class="badge bg-primary">Virtual Event</span>
                         @if (!string.IsNullOrEmpty(Model.VirtualMeetingUrl))
                         {
-                            <a href="@Model.VirtualMeetingUrl" target="_blank" class="btn btn-sm btn-primary">
-                                <i class="bi bi-camera-video"></i> Join Virtual Meeting
-                            </a>
-                        }
-                        else
-                        {
-                            <p class="text-muted">Meeting link will be provided closer to the event.</p>
+                            <br />
+                            <small>@Model.VirtualMeetingUrl</small>
                         }
                     }
                     else
                     {
                         @if (!string.IsNullOrEmpty(Model.VenueName))
                         {
-                            <p class="mb-1"><strong>@Model.VenueName</strong></p>
+                            <strong>@Model.VenueName</strong>
+                    
+                            <br />
                         }
-
                         @if (!string.IsNullOrEmpty(Model.Address))
                         {
-                            <p class="mb-1">@Model.Address</p>
+                            @Model.Address
+                    
+                            <br />
                         }
-
                         @if (!string.IsNullOrEmpty(Model.City) || !string.IsNullOrEmpty(Model.State))
                         {
-                            <p class="mb-1">@Model.City@(!string.IsNullOrEmpty(Model.City) && !string.IsNullOrEmpty(Model.State) ? ", " : "")@Model.State @Model.PostalCode</p>
-                        }
-
-                        @if (!string.IsNullOrEmpty(Model.Country))
-                        {
-                            <p class="mb-1">@Model.Country</p>
-                        }
-
-                        @if (!string.IsNullOrEmpty(Model.Address) && !string.IsNullOrEmpty(Model.City))
-                        {
-                            var mapQuery = Uri.EscapeDataString($"{Model.Address}, {Model.City}, {Model.State} {Model.PostalCode}");
-                            <a href="https://www.google.com/maps/search/?api=1&query=@mapQuery" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
-                                <i class="bi bi-map"></i> View on Map
-                            </a>
+                            @Model.City
+                            @(!string.IsNullOrEmpty(Model.City) && !string.IsNullOrEmpty(Model.State) ? ", " : "")
+                            @Model.State @Model.PostalCode
                         }
                     }
-                </div>
-            </div>
+                </dd>
 
-            <!-- Host Information Card -->
-            @if (Model.Creator != null)
+                @if (Model.MaxAttendees.HasValue)
+                {
+                    <dt class="col-sm-3">Max Attendees</dt>
+                    <dd class="col-sm-9">@Model.MaxAttendees</dd>
+                }
+
+                @if (Model.Attendees != null && Model.Attendees.Any())
+                {
+                    <dt class="col-sm-3">Current Attendees</dt>
+                    <dd class="col-sm-9">
+                        <span class="badge bg-warning text-dark">@Model.Attendees.Count registered</span>
+                    </dd>
+                }
+
+                @if (Model.IsPrivate)
+                {
+                    <dt class="col-sm-3">Privacy</dt>
+                    <dd class="col-sm-9">
+                        <span class="badge bg-secondary">Private Event</span>
+                    </dd>
+                }
+
+                @if (Model.RequiresApproval)
+                {
+                    <dt class="col-sm-3">Registration</dt>
+                    <dd class="col-sm-9">
+                        <span class="badge bg-info">Requires Approval</span>
+                    </dd>
+                }
+            </dl>
+
+            @if (Model.Attendees != null && Model.Attendees.Any())
             {
-                <div class="card mb-3">
-                    <div class="card-header bg-info text-white">
-                        <h5 class="mb-0">
-                            <i class="bi bi-person"></i> Hosted By
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        @if (Model.Creator.Profile != null)
-                        {
-                            <div class="d-flex align-items-center">
-                                @if (!string.IsNullOrEmpty(Model.Creator.Profile.ProfileImageUrl))
-                                {
-                                    <img src="@Model.Creator.Profile.ProfileImageUrl"
-                                         alt="@Model.Creator.Profile.FullName"
-                                         class="rounded-circle me-3"
-                                         width="50"
-                                         height="50">
-                                }
-                                <div>
-                                    <strong>@Model.Creator.Profile.FullName</strong><br />
-                                    @if (!string.IsNullOrEmpty(Model.Creator.Profile.DisplayName))
-                                    {
-                                        <small class="text-muted">@@@Model.Creator.Profile.DisplayName</small>
-                                    }
-                                </div>
-                            </div>
-
-                            @if (!string.IsNullOrEmpty(Model.Creator.Profile.Bio))
-                            {
-                                <p class="mt-3 mb-0">@Model.Creator.Profile.Bio</p>
-                            }
-                        }
-                        else
-                        {
-                            <p class="mb-0">@Model.Creator.Email</p>
-                        }
-                    </div>
+                <div class="alert alert-warning">
+                    <strong>Warning:</strong> This event has @Model.Attendees.Count registered attendee(s).
+                    Deleting this event will remove all registrations and may impact attendees.
                 </div>
             }
 
-            <!-- Attendees Card (if guest list is allowed) -->
-            @if (Model.AllowGuestList)
-            {
-                <div class="card mb-3">
-                    <div class="card-header bg-warning">
-                        <h5 class="mb-0">
-                            <i class="bi bi-people"></i> Attendees
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        @if (Model.MaxAttendees.HasValue)
-                        {
-                            <p class="mb-2">
-                                <strong>Capacity:</strong> @Model.Attendees.Count / @Model.MaxAttendees
-                            </p>
-                            <div class="progress mb-3">
-                                @{
-                                    var percentage = Model.MaxAttendees.Value > 0
-                                    ? (Model.Attendees.Count * 100.0 / Model.MaxAttendees.Value)
-                                    : 0;
-                                }
-                                <div class="progress-bar"
-                                     role="progressbar"
-                                     style="width: @percentage%"
-                                     aria-valuenow="@Model.Attendees.Count"
-                                     aria-valuemin="0"
-                                     aria-valuemax="@Model.MaxAttendees">
-                                </div>
-                            </div>
-                        }
-                        else
-                        {
-                            <p class="mb-2">
-                                <strong>@Model.Attendees.Count</strong> attending
-                            </p>
-                        }
+            <hr />
 
-                        @if (Model.Attendees.Any())
-                        {
-                            <div class="mt-3">
-                                <ul class="list-unstyled">
-                                    @foreach (var attendee in Model.Attendees.Take(5))
-                                    {
-                                        <li class="mb-2">
-                                            @if (attendee.User?.Profile != null)
-                                            {
-                                                <span>@attendee.User.Profile.FullName</span>
-                                            }
-                                            else
-                                            {
-                                                <span>@attendee.User?.Email</span>
-                                            }
-                                        </li>
-                                    }
-                                </ul>
-                                @if (Model.Attendees.Count > 5)
-                                {
-                                    <small class="text-muted">and @(Model.Attendees.Count - 5) more...</small>
-                                }
-                            </div>
-                        }
-                    </div>
+            <form asp-action="Delete" asp-route-id="@Model.EventId" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <a asp-action="Details" asp-route-id="@Model.EventId" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-danger btn-lg">
+                        <i class="bi bi-trash"></i> Yes, Delete This Event
+                    </button>
                 </div>
-            }
+            </form>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        // Add any additional JavaScript for the details page here
+        // Add confirmation dialog for extra safety
+        document.querySelector('form').addEventListener('submit', function(e) {
+            if (!confirm('Are you absolutely sure you want to delete this event? This cannot be undone.')) {
+                e.preventDefault();
+            }
+        });
     </script>
 }

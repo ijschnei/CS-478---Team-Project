@@ -144,7 +144,7 @@ namespace CS478_EventPlannerProject.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var eventItem = await _eventService.GetEventByIdAsync(id);
-            if(eventItem == null)
+            if (eventItem == null)
             {
                 return NotFound();
             }
@@ -159,21 +159,21 @@ namespace CS478_EventPlannerProject.Controllers
         // POST: Events/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task <IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var eventItem = await _eventService.GetEventByIdAsync(id);
-            if(eventItem == null)
+            if (eventItem == null)
             {
                 return NotFound();
             }
             var currentUser = await _userManager.GetUserAsync(User);
-            if(currentUser?.Id != eventItem.CreatorId && !User.IsInRole("Admin"))
+            if (currentUser?.Id != eventItem.CreatorId && !User.IsInRole("Admin"))
             {
                 return Forbid();
             }
             await _eventService.DeleteEventAsync(id);
             return RedirectToAction(nameof(Index));
-           
+
         }
 
         // GET: Events/MyEvents

@@ -60,7 +60,6 @@ builder.Services.AddScoped<IThemeService, ThemeService>();
 builder.Services.AddScoped<ICustomFieldsService, CustomFieldService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddTransient<IEmailSender, EmailSenderService>();
-builder.Services.AddScoped<IEventGroupMessageService, EventGroupMessageService>();
 
 //AutoMapper
 //builder.Services.AddAutoMapper(typeof(Program));
@@ -75,7 +74,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
-    await UserSeeder.SeedDummyUsersAsync(app);
+    await EventSeeder.SeedEventsAsync(app);
 }
 else
 {
@@ -93,7 +92,7 @@ app.UseAuthorization();
 //SignalR hubs
 //app.MapHub<ChatHub>("/chatHub");
 
-
+app.MapFallbackToFile("home.html");
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
