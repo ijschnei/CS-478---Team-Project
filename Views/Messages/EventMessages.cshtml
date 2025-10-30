@@ -1,4 +1,6 @@
-﻿@model IEnumerable<CS478_EventPlannerProject.Models.Messages>
+﻿<!--I'm thinking this view will be used when a user messages an event page/creator of an event with any questions in contrast to the event 
+group chat which all attendees can participate in. May end up being unneccesary, was created before I settled on doing the Group Chats, hopefully can repurpose.-->
+@model IEnumerable<CS478_EventPlannerProject.Models.Messages>
 @{
 	ViewData["Title"] = "Event Messages";
 	var eventItem = ViewBag.Event as CS478_EventPlannerProject.Models.Events;
