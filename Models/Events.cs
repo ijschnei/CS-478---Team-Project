@@ -66,7 +66,7 @@ namespace CS478_EventPlannerProject.Models
         public string? BannerImageUrl { get; set; }
 
         [NotMapped]
-        public IFormFile BannerImageFile { get; set; }
+        public IFormFile? BannerImageFile { get; set; }
         //comment for test push
         //Metadata
         [Required]

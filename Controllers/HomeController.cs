@@ -19,9 +19,9 @@ namespace CS478_EventPlannerProject.Controllers
 
         public async Task<IActionResult> Index()
         {
-            // Get upcoming events (next 4 events)
+            // Get upcoming active events (next 4 events)
             var upcomingEvents = await _context.Events
-                .Where(e => e.StartDateTime >= DateTime.Now && !e.IsPrivate)
+                .Where(e => e.StartDateTime >= DateTime.Now && !e.IsPrivate && e.IsActive && !e.IsDeleted)
                 .OrderBy(e => e.StartDateTime)
                 .Take(4)
                 .ToListAsync();

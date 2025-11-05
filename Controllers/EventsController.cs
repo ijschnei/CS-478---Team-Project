@@ -171,6 +171,8 @@ namespace CS478_EventPlannerProject.Controllers
                             await eventModel.BannerImageFile.CopyToAsync(fileStream);
                         }
 
+
+                        //Look at this over the weekend
                         if (!string.IsNullOrEmpty(eventModel.BannerImageUrl) && eventModel.BannerImageUrl.StartsWith("/images/"))
                         {
                             var oldImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", eventModel.BannerImageUrl.TrimStart('/'));

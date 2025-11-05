@@ -1,7 +1,9 @@
 ﻿@model IEnumerable<CS478_EventPlannerProject.Models.Events>
 @{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Home";
 }
+
+<link rel="stylesheet" href="~/css/home.css" />
 
 <section class="welcome">
     <h1>
@@ -14,9 +16,38 @@
 <section class="suggested">
     <h2><span class="curved">Some Suggested Events</span></h2>
     <div class="event-grid">
-        <div class="event-box">Suggested Event 1</div>
-        <div class="event-box">Suggested Event 2</div>
-        <div class="event-box">Suggested Event 3</div>
-        <div class="event-box">Suggested Event 4</div>
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var item in Model.Take(4))
+            {
+                <a asp-controller="Events" asp-action="Details" asp-route-id="@item.EventId" class="event-box">
+                    <div class="event-content">
+                        <h3>@item.EventName</h3>
+                        <p class="event-date">
+                            <i class="bi bi-calendar"></i>
+                            @item.StartDateTime.ToString("MMM dd, yyyy")
+                        </p>
+                        <p class="event-location">
+                            <i class="bi bi-geo-alt"></i>
+                            @if (item.IsVirtual)
+                            {
+                                <span>Virtual</span>
+                            }
+                            else
+                            {
+                                <span>@item.City</span>
+                            }
+                        </p>
+                    </div>
+                </a>
+            }
+        }
+        else
+        {
+            <div class="event-box">No Events Yet</div>
+            <div class="event-box">Create an Event!</div>
+            <div class="event-box">Explore Calendar</div>
+            <div class="event-box">Join Community</div>
+        }
     </div>
 </section>

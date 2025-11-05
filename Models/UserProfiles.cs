@@ -19,6 +19,8 @@ namespace CS478_EventPlannerProject.Models
         public string? Bio { get; set; }
         [MaxLength(500)]
         public string? ProfileImageUrl { get; set; }
+        [NotMapped]
+        public IFormFile? ProfileImageFile { get; set; }
         public DateTime? DateOfBirth { get; set; }
         [MaxLength(200)]
         public string? Location { get; set; }
