@@ -127,14 +127,32 @@ namespace CS478_EventPlannerProject.Services.Implementation
             var existingAttendee = await _context.EventAttendees
                 .FirstOrDefaultAsync(ea => ea.EventId == eventId && ea.UserId == userId);
             if (existingAttendee != null) return false;
-            var eventAttendee = new EventAttendees
+            //get event to check RequiresApproval setting
+            var eventItem = await _context.Events
+                .FirstOrDefaultAsync(e => e.EventId == eventId && !e.IsDeleted && e.IsActive);
+            if (eventItem == null) return false;
+            //determine initial status based on event settings
+            string initialStatus;
+            if(attendeeType == "organizer" || attendeeType == "co-organizer")
             {
-                EventId = eventId,
-                UserId = userId,
-                AttendeeType = attendeeType,
-                Status = attendeeType == "organizer" ? "accepted" : "pending",
-                RSVP_Date = DateTime.UtcNow
-            };
+                initialStatus = "accepted"; //organizers always accepted
+            }
+            else if (eventItem.RequiresApproval)
+            {
+                initialStatus = "pending"; //needs approval from organizer
+            }
+            else
+            {
+                initialStatus = "accepted"; //auto-accept if no approval required
+            }
+                var eventAttendee = new EventAttendees
+                {
+                    EventId = eventId,
+                    UserId = userId,
+                    AttendeeType = attendeeType,
+                    Status = initialStatus,
+                    RSVP_Date = DateTime.UtcNow
+                };
 
             _context.EventAttendees.Add(eventAttendee);
             await _context.SaveChangesAsync();
