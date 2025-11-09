@@ -134,7 +134,7 @@ namespace CS478_EventPlannerProject.Controllers
         // POST: Events/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("EventName,EventDescription,EventDetails,StartDateTime,EndDateTime,TimeZone,IsAllDay,VenueName,Address,City,State,Country,PostalCode,IsVirtual,VirtualMeetingUrl,MaxAttendees,IsPrivate,RequiresApproval,AllowGuestList,ThemeId,CustomCss,BannerImageUrl, BannerImageUrl")] Events eventModel)
+        public async Task<IActionResult> Edit(int id, [Bind("EventName,EventDescription,EventDetails,StartDateTime,EndDateTime,TimeZone,IsAllDay,VenueName,Address,City,State,Country,PostalCode,IsVirtual,VirtualMeetingUrl,MaxAttendees,IsPrivate,RequiresApproval,AllowGuestList,ThemeId,CustomCss,BannerImageUrl, BannerImageFile")] Events eventModel)
         {
             if (id != eventModel.EventId)
             {
