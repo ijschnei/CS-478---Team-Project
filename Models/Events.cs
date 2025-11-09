@@ -60,18 +60,19 @@ namespace CS478_EventPlannerProject.Models
         public bool AllowGuestList { get; set; } = true;
 
         //event customization
-        public int? ThemeId { get;set; }
+        public int? ThemeId { get; set; }
         public string? CustomCss { get; set; }
         [MaxLength(500)]
         public string? BannerImageUrl { get; set; }
 
         [NotMapped]
         public IFormFile? BannerImageFile { get; set; }
+        //comment for test push
         //Metadata
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         [Required]
-        public DateTime UpdatedAt { get;set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         public bool IsActive { get; set; } = true;
         public bool IsDeleted { get; set; } = false;
 

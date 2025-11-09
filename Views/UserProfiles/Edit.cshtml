@@ -37,8 +37,16 @@
 
     <div class="form-group">
         <label for="ProfileImageUrl">Profile Image</label>
-        <input type="file" name="ProfileImage" class="form-control" />
-        <span asp-validation-for="ProfileImageUrl" class="text-danger"></span>
+        <input asp-for="ProfileImageFile" type="file" class="form-control" data-val="false" />
+        <span asp-validation-for="ProfileImageFile" class="text-danger"></span>
+        <small class="form-text text-muted">Upload a profile image (JPG, PNG, GIF)</small>
+        @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
+        {
+            <div class="mt-2">
+                <img src="@Model.ProfileImageUrl" alt="Current Profile" style="max-width: 150px; max-height: 150px; border-radius: 50%;" />
+                <p class="text-muted">Current profile image</p>
+            </div>
+        }
     </div>
 
     <div class="form-group">
@@ -80,6 +88,6 @@
     <a asp-action="Profile" class="btn btn-secondary">Cancel</a>
 </form>
 
-@section Scripts {
+@*section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
+}*@

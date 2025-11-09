@@ -47,11 +47,11 @@ namespace CS478_EventPlannerProject.Controllers
             return View(model);
         }
 
-        
         // POST: Events/Create
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("EventName,EventDescription,EventDetails,StartDateTime,EndDateTime,TimeZone,IsAllDay,VenueName,Address,City,State,Country,PostalCode,IsVirtual,VirtualMeetingUrl,MaxAttendees,IsPrivate,RequiresApproval,AllowGuestList,ThemeId,CustomCss,BannerImageUrl")] Events eventModel)
+        public async Task<IActionResult> Create(Events eventModel)
         {
             // Remove validation for properties that are set automatically
             ModelState.Remove("CreatorId");
@@ -71,7 +71,7 @@ namespace CS478_EventPlannerProject.Controllers
 
                     try
                     {
-                        //handle file upload
+                        // Handle file upload
                         if (eventModel.BannerImageFile != null && eventModel.BannerImageFile.Length > 0)
                         {
                             var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "events");
@@ -87,6 +87,7 @@ namespace CS478_EventPlannerProject.Controllers
 
                             eventModel.BannerImageUrl = "/images/events/" + uniqueFileName;
                         }
+
                         await _eventService.CreateEventAsync(eventModel);
                         TempData["Success"] = "Event created successfully!";
                         return RedirectToAction(nameof(MyEvents));
@@ -134,12 +135,13 @@ namespace CS478_EventPlannerProject.Controllers
         // POST: Events/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("EventName,EventDescription,EventDetails,StartDateTime,EndDateTime,TimeZone,IsAllDay,VenueName,Address,City,State,Country,PostalCode,IsVirtual,VirtualMeetingUrl,MaxAttendees,IsPrivate,RequiresApproval,AllowGuestList,ThemeId,CustomCss,BannerImageUrl, BannerImageFile")] Events eventModel)
+        public async Task<IActionResult> Edit(int id, Events eventModel)
         {
             if (id != eventModel.EventId)
             {
                 return NotFound();
             }
+
             // Remove validation for properties that shouldn't be validated
             ModelState.Remove("Creator");
             ModelState.Remove("CreatedAt");
@@ -169,6 +171,8 @@ namespace CS478_EventPlannerProject.Controllers
                             await eventModel.BannerImageFile.CopyToAsync(fileStream);
                         }
 
+
+                        //Look at this over the weekend
                         if (!string.IsNullOrEmpty(eventModel.BannerImageUrl) && eventModel.BannerImageUrl.StartsWith("/images/"))
                         {
                             var oldImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", eventModel.BannerImageUrl.TrimStart('/'));
@@ -180,6 +184,7 @@ namespace CS478_EventPlannerProject.Controllers
 
                         eventModel.BannerImageUrl = "/images/events/" + uniqueFileName;
                     }
+
                     var updatedEvent = await _eventService.UpdateEventAsync(eventModel);
                     if (updatedEvent != null)
                     {
@@ -188,11 +193,12 @@ namespace CS478_EventPlannerProject.Controllers
                     }
                     return NotFound();
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     ModelState.AddModelError("", $"Error updating event: {ex.Message}");
                 }
             }
+
             return View(eventModel);
         }
 
@@ -300,5 +306,7 @@ namespace CS478_EventPlannerProject.Controllers
             ViewBag.CategoryId = categoryId;
             return View(events);
         }
+
     }
+
 }

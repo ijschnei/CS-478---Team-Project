@@ -191,12 +191,19 @@ main > p,
     }
 }
 
-.events-grid,
-main > .row:has(.card) {
+.events-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 30px;
     margin-top: 30px;
+}
+
+/* Don't apply grid to rows with column classes */
+.row:has(.col-md-3),
+.row:has(.col-md-4),
+.row:has(.col-md-6),
+.row:has(.col-md-8) {
+    display: flex;
 }
 
 .card {
@@ -541,6 +548,26 @@ textarea.form-control {
     .validation-summary-errors li {
         padding: 5px 0;
     }
+
+/* Add calendar-specific styles */
+.calendar-day {
+    min-height: 120px;
+    max-height: 120px;
+    overflow: hidden;
+    background: #f7fcfb;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 10px;
+    transition: 0.3s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.day-events {
+    flex: 1;
+    overflow: hidden;
+}
 
 @media (max-width: 768px) {
     main {

@@ -8,7 +8,7 @@
 
 <div class="row">
     <div class="col-md-8">
-        <form asp-action="Edit" method="post">
+        <form asp-action="Edit" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
             <!-- Hidden field to maintain EventId -->
@@ -190,10 +190,18 @@
                 </div>
                 <div class="card-body">
                     <div class="form-group">
-                        <label asp-for="BannerImageUrl" class="control-label">Banner Image URL</label>
-                        <input asp-for="BannerImageUrl" type="url" class="form-control" placeholder="https://example.com/image.jpg" />
-                        <span asp-validation-for="BannerImageUrl" class="text-danger"></span>
-                        <small class="form-text text-muted">URL to an image for your event banner</small>
+                        <label asp-for="BannerImageFile" class="control-label">Banner Image</label>
+                        <input asp-for="BannerImageFile" type="file" class="form-control" accept="image/*" data-val="false" />
+                        <span asp-validation-for="BannerImageFile" class="text-danger"></span>
+                        <small class="form-text text-muted">Upload an image for your event banner (JPG, PNG, GIF)</small>
+
+                        @if (!string.IsNullOrEmpty(Model.BannerImageUrl))
+                        {
+                            <div class="mt-2">
+                                <img src="@Model.BannerImageUrl" alt="Current Banner" style="max-width: 200px; max-height: 150px; border-radius: 8px;" />
+                                <p class="text-muted">Current banner image</p>
+                            </div>
+                        }
                     </div>
 
                     <div class="form-group mt-3">
@@ -221,10 +229,10 @@
     </div>
 </div>
 
-@section Scripts {
+@*section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    }*@
     <script>
         // Initialize the location visibility based on IsVirtual state
         document.addEventListener('DOMContentLoaded', function() {
