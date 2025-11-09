@@ -18,6 +18,8 @@ namespace CS478_EventPlannerProject.Data
         public DbSet<EventTheme> EventThemes { get; set; }
         public DbSet<EventCustomFields> EventCustomFields { get; set; }
         public DbSet<Messages> Messages { get; set; }
+        public DbSet <EventGroupMessages> EventGroupMessages { get; set; }
+        public DbSet<EventGroupMessageReads> EventGroupMessageReads { get; set; }
         public DbSet<UserProfiles> UserProfiles { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -92,6 +94,43 @@ namespace CS478_EventPlannerProject.Data
                 .WithMany(e => e.RelatedMessages)
                 .HasForeignKey(m => m.RelatedEventId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            //EventGroupMessages configuration
+            modelBuilder.Entity<EventGroupMessages>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.HasOne(e => e.Event)
+                    .WithMany()
+                    .HasForeignKey(e => e.EventId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Sender)
+                    .WithMany()
+                    .HasForeignKey(e => e.SenderId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(e => new { e.EventId, e.SentAt });
+                entity.HasIndex(e => e.IsPinned);
+            });
+            //EventGroupMessageReads configuration
+            modelBuilder.Entity<EventGroupMessageReads>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.HasOne(e => e.Message)
+                    .WithMany(m => m.MessageReads)
+                    .HasForeignKey(e => e.MessageId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e=>e.User)
+                    .WithMany()
+                    .HasForeignKey(e=>e.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(e => new {e.MessageId, e.UserId})
+                    .IsUnique();
+            });
 
             //UserProfiles relationships
             modelBuilder.Entity<UserProfiles>()

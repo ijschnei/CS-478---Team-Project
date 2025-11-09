@@ -365,6 +365,38 @@ namespace CS478_EventPlannerProject.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "EventGroupMessages",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    EventId = table.Column<int>(type: "int", nullable: false),
+                    SenderId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    MessageType = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
+                    Subject = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    SentAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsPinned = table.Column<bool>(type: "bit", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EventGroupMessages", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_EventGroupMessages_AspNetUsers_SenderId",
+                        column: x => x.SenderId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_EventGroupMessages_Events_EventId",
+                        column: x => x.EventId,
+                        principalTable: "Events",
+                        principalColumn: "EventId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Messages",
                 columns: table => new
                 {
@@ -407,6 +439,33 @@ namespace CS478_EventPlannerProject.Migrations
                         onDelete: ReferentialAction.SetNull);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "EventGroupMessageReads",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MessageId = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ReadAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EventGroupMessageReads", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_EventGroupMessageReads_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_EventGroupMessageReads_EventGroupMessages_MessageId",
+                        column: x => x.MessageId,
+                        principalTable: "EventGroupMessages",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.InsertData(
                 table: "EventCategories",
                 columns: new[] { "Id", "ColorCode", "Description", "IconUrl", "IsActive", "Name" },
@@ -424,9 +483,9 @@ namespace CS478_EventPlannerProject.Migrations
                 columns: new[] { "Id", "CreatedAt", "CssTemplate", "Description", "IsActive", "IsPremium", "Name", "ThumbnailUrl" },
                 values: new object[,]
                 {
-                    { 1, new DateTime(2025, 9, 5, 18, 48, 25, 546, DateTimeKind.Utc).AddTicks(2292), null, "Clean and professional theme", true, false, "Classic", null },
-                    { 2, new DateTime(2025, 9, 5, 18, 48, 25, 546, DateTimeKind.Utc).AddTicks(2304), null, "Contemporary design with bold colors", true, false, "Modern", null },
-                    { 3, new DateTime(2025, 9, 5, 18, 48, 25, 546, DateTimeKind.Utc).AddTicks(2306), null, "Sophisticated and refined styling", true, true, "Elegant", null }
+                    { 1, new DateTime(2025, 10, 27, 2, 7, 39, 977, DateTimeKind.Utc).AddTicks(3770), null, "Clean and professional theme", true, false, "Classic", null },
+                    { 2, new DateTime(2025, 10, 27, 2, 7, 39, 977, DateTimeKind.Utc).AddTicks(3776), null, "Contemporary design with bold colors", true, false, "Modern", null },
+                    { 3, new DateTime(2025, 10, 27, 2, 7, 39, 977, DateTimeKind.Utc).AddTicks(3777), null, "Sophisticated and refined styling", true, true, "Elegant", null }
                 });
 
             migrationBuilder.CreateIndex(
@@ -487,6 +546,32 @@ namespace CS478_EventPlannerProject.Migrations
                 name: "IX_EventCustomFields_EventId",
                 table: "EventCustomFields",
                 column: "EventId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EventGroupMessageReads_MessageId_UserId",
+                table: "EventGroupMessageReads",
+                columns: new[] { "MessageId", "UserId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EventGroupMessageReads_UserId",
+                table: "EventGroupMessageReads",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EventGroupMessages_EventId_SentAt",
+                table: "EventGroupMessages",
+                columns: new[] { "EventId", "SentAt" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EventGroupMessages_IsPinned",
+                table: "EventGroupMessages",
+                column: "IsPinned");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EventGroupMessages_SenderId",
+                table: "EventGroupMessages",
+                column: "SenderId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Events_CreatorId",
@@ -558,6 +643,9 @@ namespace CS478_EventPlannerProject.Migrations
                 name: "EventCustomFields");
 
             migrationBuilder.DropTable(
+                name: "EventGroupMessageReads");
+
+            migrationBuilder.DropTable(
                 name: "Messages");
 
             migrationBuilder.DropTable(
@@ -568,6 +656,9 @@ namespace CS478_EventPlannerProject.Migrations
 
             migrationBuilder.DropTable(
                 name: "EventCategories");
+
+            migrationBuilder.DropTable(
+                name: "EventGroupMessages");
 
             migrationBuilder.DropTable(
                 name: "Events");
