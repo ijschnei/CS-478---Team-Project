@@ -47,6 +47,7 @@ namespace CS478_EventPlannerProject.Controllers
             return View(model);
         }
 
+        
         // POST: Events/Create
 
         [HttpPost]

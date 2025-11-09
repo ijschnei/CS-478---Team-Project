@@ -67,7 +67,6 @@ namespace CS478_EventPlannerProject.Models
 
         [NotMapped]
         public IFormFile? BannerImageFile { get; set; }
-        //comment for test push
         //Metadata
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
