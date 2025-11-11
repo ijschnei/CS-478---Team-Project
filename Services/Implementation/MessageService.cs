@@ -177,5 +177,103 @@ namespace CS478_EventPlannerProject.Services.Implementation
                 throw new InvalidOperationException($"Failed to retrieve messages for event {eventId}", ex);
             }
         }
+
+        public async Task<Messages> SendEventInvitationAsync(int eventId, string senderId, string receiverId, string? customMessage = null)
+        {
+            if (string.IsNullOrWhiteSpace(senderId) || string.IsNullOrWhiteSpace(receiverId))
+                throw new ArgumentException("SenderId and ReceiverId are required");
+            if (senderId == receiverId)
+                throw new ArgumentException("Cannot send invitation to yourself");
+            try
+            {
+                //verify event exists
+                var eventItem = await _context.Events
+                    .Include(e => e.Creator)
+                        .ThenInclude(c => c.Profile)
+                    .FirstOrDefaultAsync(e => e.EventId == eventId && !e.IsDeleted && e.IsActive);
+                if (eventItem == null)
+                    throw new ArgumentException("Event does not exist or is not active");
+                //verify sender is the event creator
+                if (eventItem.CreatorId != senderId)
+                    throw new ArgumentException("Only event creators can send invitations");
+                //check if user is already attending
+                var alreadyAttending = await _context.EventAttendees
+                    .AnyAsync(ea => ea.EventId == eventId && ea.UserId == receiverId);
+                if (alreadyAttending)
+                    throw new InvalidOperationException("User is already registerd for this event");
+                //create invitation message
+                var creatorName = eventItem.Creator?.Profile?.FullName ?? eventItem.Creator?.UserName ?? "Event Organizer";
+
+                var message = new Messages
+                {
+                    SenderId = senderId,
+                    ReceiverId = receiverId,
+                    Subject = $"Invitation to {eventItem.EventName}",
+                    Content = string.IsNullOrWhiteSpace(customMessage)
+                        ? $"{creatorName} has invited you to attend '{eventItem.EventName}' on {eventItem.StartDateTime:MM dd, yyyy}. Click the button below to accept this invitation and join the event."
+                        : customMessage,
+                    MessageType = "event_related",
+                    RelatedEventId = eventId,
+                    ConversationId = Guid.NewGuid(),
+                    SentAt = DateTime.UtcNow,
+                    IsRead = false
+                };
+                _context.Messages.Add(message);
+                await _context.SaveChangesAsync();
+
+                return await _context.Messages
+                    .Include(m => m.Sender)
+                        .ThenInclude(s => s.Profile)
+                    .Include(m => m.Receiver)
+                        .ThenInclude(r => r.Profile)
+                    .Include(m => m.RelatedEvent)
+                    .FirstAsync(m => m.Id == message.Id);
+            }catch (Exception ex) when (!(ex is ArgumentException || ex is InvalidOperationException))
+            {
+                throw new InvalidOperationException("Failed to send event invitation", ex);
+            }
+        }
+
+        public async Task<bool> AcceptEventInvitationAsync(int messageId, string userId)
+        {
+            if (messageId <= 0 || string.IsNullOrWhiteSpace(userId))
+                return false;
+
+            try
+            {
+                var message = await _context.Messages
+                    .Include(m => m.RelatedEvent)
+                    .FirstOrDefaultAsync(m => m.Id == messageId &&
+                                            m.ReceiverId == userId &&
+                                            m.MessageType == "event_related" &&
+                                            m.RelatedEventId.HasValue);
+                if (message == null || message.RelatedEvent == null)
+                    return false;
+                //check if already attending
+                var alreadyAttending = await _context.EventAttendees
+                    .AnyAsync(ea => ea.EventId == message.RelatedEventId.Value && ea.UserId == userId);
+                if (alreadyAttending)
+                    return false;
+                //add as attendee
+                var attendee = new EventAttendees
+                {
+                    EventId = message.RelatedEventId.Value,
+                    UserId = userId,
+                    AttendeeType = "attendee",
+                    Status = "accepted",
+                    RSVP_Date = DateTime.UtcNow
+                };
+
+                _context.EventAttendees.Add(attendee);
+                //mark message as read
+                message.IsRead = true;
+                message.ReadAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+                return true;
+            } catch(Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to accept event invitation {messageId}", ex);
+            }
+        }
     }
 }

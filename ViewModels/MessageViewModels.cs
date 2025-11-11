@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using CS478_EventPlannerProject.Models;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 //test commit
 namespace CS478_EventPlannerProject.ViewModels
 {
@@ -9,6 +10,12 @@ namespace CS478_EventPlannerProject.ViewModels
         public Messages LastMessage { get; set; } = null!;
         public int UnreadCount { get; set; }
         public int MessageCount { get; set; }
+        public bool IsEventInvitation => LastMessage?.MessageType == "event_related"
+                                           && LastMessage?.RelatedEventId.HasValue == true;
+        public bool HasJoinedEvent(string userId)
+        {
+            return LastMessage?.RelatedEvent?.Attendees.Any(a=> a.UserId == userId) ?? false;
+        }
     }
 
     public class ComposeMessageViewModel

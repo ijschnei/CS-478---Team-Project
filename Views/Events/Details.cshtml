@@ -95,6 +95,7 @@
                                      <i class="bi bi-chat-square-text"></i> Event Chat
                                 </a>
                             }
+                           
                             <!--Join/RSVP Actions-->
                             @if (!isCreator && !Model.IsPast)
                             {
@@ -196,6 +197,10 @@
                             {
                                 <a asp-action="Edit" asp-route-id="@Model.EventId" class="btn btn-warning">
                                     <i class="bi bi-pencil"></i> Edit
+                                </a>
+                                <a asp-controller="EventInvitations" asp-action="Send" asp-route-id="@Model.EventId"
+                                    class="btn btn-primary">
+                                    <i class="fas fa-envelope"></i> Invite Users
                                 </a>
                                 <a asp-action="Attendees" asp-route-id="@Model.EventId" class="btn btn-info">
                                     <i class="bi bi-people"></i> Manage Attendees

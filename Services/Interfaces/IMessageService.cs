@@ -11,5 +11,7 @@ namespace CS478_EventPlannerProject.Services.Interfaces
         Task<bool> MarkAsReadAsync(int messageId, string userId);
         Task<int> GetUnreadCountAsync(string userId);
         Task<IEnumerable<Messages>> GetEventMessagesAsync(int eventId);
+        Task<Messages> SendEventInvitationAsync(int eventId, string senderId, string receiverId, string? customMessage = null);
+        Task<bool> AcceptEventInvitationAsync(int messageId, string userId);
     }
 }
