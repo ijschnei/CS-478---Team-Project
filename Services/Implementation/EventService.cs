@@ -81,8 +81,17 @@ namespace CS478_EventPlannerProject.Services.Implementation
         }
         public async Task<Events?> UpdateEventAsync(Events eventModel)
         {
+           
             var existingEvent = await _context.Events.FindAsync(eventModel.EventId);
             if (existingEvent == null) return null;
+            //CSS validation to prevent harmful script injection
+            if (!string.IsNullOrEmpty(eventModel.CustomCss))
+            {
+                if (!ValidateCustomCss(eventModel.CustomCss))
+                {
+                    throw new ArgumentException("CSS contains potentially unsafe content");
+                }
+            }
             //Update properties
             existingEvent.EventName = eventModel.EventName;
             existingEvent.EventDescription = eventModel.EventDescription;
@@ -110,6 +119,24 @@ namespace CS478_EventPlannerProject.Services.Implementation
 
             await _context.SaveChangesAsync();
             return existingEvent;
+        }
+        //helper method for checking potentially dangerous script
+        private static bool ValidateCustomCss(string css)
+        {
+            var dangerousPatterns = new[]
+            {
+                "javascript:",
+                "expression(",
+                "import",
+                "@import",
+                "url(data:",
+                "<script",
+                "onclick",
+                "onerror",
+                "onload"
+            };
+            var cssLower = css.ToLower();
+            return !dangerousPatterns.Any(pattern=>cssLower.Contains(pattern));
         }
         public async Task<bool> DeleteEventAsync(int id)
         {
