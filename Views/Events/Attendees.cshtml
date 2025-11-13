@@ -1,0 +1,107 @@
+﻿@model IEnumerable<CS478_EventPlannerProject.Models.EventAttendees>
+@{
+    ViewData["Title"] = "Manage Attendees";
+    var eventItem = ViewBag.Event as CS478_EventPlannerProject.Models.Events;
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Manage Attendees - @eventItem.EventName</h2>
+        <a asp-action="Details" asp-route-id="@eventItem.EventId" class="btn btn-secondary">Back to Event</a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-header">
+            <h5>Attendees (@Model.Count())</h5>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Type</th>
+                                <th>RSVP Date</th>
+                                <th>Checked In</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var attendee in Model)
+                            {
+                                <tr>
+                                    <td>@attendee.User.UserName</td>
+                                    <td>@attendee.User.Email</td>
+                                    <td>
+                                        @if (attendee.Status == "accepted")
+                                        {
+                                            <span class="badge bg-success">@attendee.Status</span>
+                                        }
+                                        else if (attendee.Status == "pending")
+                                        {
+                                            <span class="badge bg-warning">@attendee.Status</span>
+                                        }
+                                        else if (attendee.Status == "declined")
+                                        {
+                                            <span class="badge bg-danger">@attendee.Status</span>
+                                        }
+                                        else if (attendee.Status == "tentative")
+                                        {
+                                            <span class="badge bg-info">@attendee.Status</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">@attendee.Status</span>
+                                        }
+                                    </td>
+                                    <td>@attendee.AttendeeType</td>
+                                    <td>@attendee.RSVP_Date.ToString("MMM dd, yyyy")</td>
+                                    <td>
+                                        @if (attendee.CheckedIn)
+                                        {
+                                            <span class="badge bg-success">Yes</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">No</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <form asp-action="RemoveAttendee" asp-route-eventId="@eventItem.EventId" asp-route-userId="@attendee.UserId" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to remove this attendee?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-muted">No attendees have registered yet.</p>
+            }
+        </div>
+    </div>
+</div>

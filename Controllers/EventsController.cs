@@ -308,6 +308,33 @@ namespace CS478_EventPlannerProject.Controllers
             return View(events);
         }
 
+
+        // POST: Events/RemoveAttendee
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveAttendee(int eventId, string userId)
+        {
+            var eventItem = await _eventService.GetEventByIdAsync(eventId);
+            if (eventItem == null) return NotFound();
+
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser?.Id != eventItem.CreatorId && !User.IsInRole("Admin"))
+            {
+                return Forbid();
+            }
+
+            var success = await _eventService.RemoveAttendeeAsync(eventId, userId);
+            if (success)
+            {
+                TempData["Success"] = "Attendee removed successfully!";
+            }
+            else
+            {
+                TempData["Error"] = "Could not remove attendee.";
+            }
+            return RedirectToAction("Attendees", new { id = eventId });
+        }
+
     }
 
 }

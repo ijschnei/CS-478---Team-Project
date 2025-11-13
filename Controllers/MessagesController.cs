@@ -67,14 +67,14 @@ namespace CS478_EventPlannerProject.Controllers
                 var messages = await _messageService.GetConversationAsync(conversationId);
 
                 //verify user is part of this conversation
-                if(!messages.Any(m=>m.SenderId == currentUser.Id || m.ReceiverId == currentUser.Id))
+                if (!messages.Any(m => m.SenderId == currentUser.Id || m.ReceiverId == currentUser.Id))
                 {
                     return Forbid();
                 }
 
                 //mark messages as read
                 var unreadMessages = messages.Where(m => m.ReceiverId == currentUser.Id && !m.IsRead);
-                foreach(var message in unreadMessages)
+                foreach (var message in unreadMessages)
                 {
                     await _messageService.MarkAsReadAsync(message.Id, currentUser.Id);
                 }
@@ -86,7 +86,7 @@ namespace CS478_EventPlannerProject.Controllers
                 var otherParticipant = messages
                     .Where(m => m.SenderId != currentUser.Id)
                     .Select(m => m.Sender)
-                    .FirstOrDefault() ?? 
+                    .FirstOrDefault() ??
                     messages
                     .Where(m => m.ReceiverId != currentUser.Id)
                     .Select(m => m.Receiver)
@@ -109,7 +109,7 @@ namespace CS478_EventPlannerProject.Controllers
                 if (!string.IsNullOrEmpty(receiverId))
                 {
                     var receiver = await _userManager.FindByIdAsync(receiverId);
-                    if(receiver != null)
+                    if (receiver != null)
                     {
                         model.ReceiverId = receiverId;
                         model.ReceiverName = receiver.Profile?.FullName ?? receiver.UserName ?? "Unknown User";
@@ -138,7 +138,7 @@ namespace CS478_EventPlannerProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Compose([Bind("ReceiverId,Subject,Content,MessageType,RelatedEventId")] ComposeMessageViewModel model)
         {
-            if (ModelState.IsValid) 
+            if (ModelState.IsValid)
             {
                 try
                 {
@@ -215,7 +215,7 @@ namespace CS478_EventPlannerProject.Controllers
                 var messages = await _messageService.GetEventMessagesAsync(eventId);
                 ViewBag.Event = eventItem;
                 ViewBag.CurrentUserId = currentUser.Id;
-                return View(messages);              
+                return View(messages);
             }
             catch (Exception)
             {
@@ -344,7 +344,7 @@ namespace CS478_EventPlannerProject.Controllers
 
                 return View(messages);
             }
-            catch(Exception)
+            catch (Exception)
             {
                 TempData["Error"] = "Failed to load event group chat.";
                 return RedirectToAction("Details", "Events", new { id = eventId });
@@ -415,7 +415,7 @@ namespace CS478_EventPlannerProject.Controllers
                 TempData["Success"] = "Announcement sent successfully!";
                 return RedirectToAction(nameof(EventGroupChat), new { eventId });
             }
-            catch(InvalidOperationException ex)
+            catch (InvalidOperationException ex)
             {
                 TempData["Error"] = ex.Message;
                 return RedirectToAction(nameof(EventGroupChat), new { eventId });
@@ -496,5 +496,5 @@ namespace CS478_EventPlannerProject.Controllers
             }
         }
     }
- 
+
 }
