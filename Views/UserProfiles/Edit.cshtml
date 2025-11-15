@@ -3,12 +3,14 @@
 @{
     ViewData["Title"] = "Edit Profile";
 }
+<link rel="stylesheet" href="~/css/userprofile.css" />
 
 <h2>Edit Profile</h2>
-
-<form asp-action="Edit" method="post" enctype="multipart/form-data">
+<form asp-action="Edit" enctype="multipart/form-data" method="post" id="profileForm">
     @Html.AntiForgeryToken()
-    <input type="hidden" asp-for="UserProfileId"/>
+    <input type="hidden" asp-for="UserProfileId" />
+    <input type="hidden" name="SelectedAvatar" id="selectedAvatarInput" value="" />
+
     <div class="form-group">
         <label for="FirstName">First Name</label>
         <input type="text" asp-for="FirstName" class="form-control" />
@@ -34,9 +36,45 @@
     </div>
 
     <div class="form-group">
-        <label for="ProfileImageUrl">Profile Image</label>
-        <input type="file" name="ProfileImage" class="form-control" />
-        <span asp-validation-for="ProfileImageUrl" class="text-danger"></span>
+        <label>Profile Image</label>
+
+        <!-- Current Image Display -->
+        @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
+        {
+            <div class="mb-3">
+                <img src="@Model.ProfileImageUrl" alt="Current Profile" id="currentProfileImg" style="max-width: 150px; max-height: 150px; border-radius: 50%; border: 3px solid #ddd;" />
+                <p class="text-muted mb-0">Current profile image</p>
+            </div>
+        }
+
+        <!-- Avatar Selection Section -->
+        <div class="mb-3">
+            <button type="button" class="btn btn-outline-primary btn-sm" id="showAvatarsBtn">
+                <i class="bi bi-image"></i> Choose from Default Avatars
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="hideAvatarsBtn">
+                <i class="bi bi-x"></i> Hide Avatars
+            </button>
+        </div>
+
+        <div id="avatarGallery" class="mb-3" style="display: none;">
+            <p class="text-muted mb-2">Select a default avatar:</p>
+            <div id="avatarContainer" class="d-flex flex-wrap gap-2">
+                <!-- Avatars will be loaded here dynamically -->
+                <div class="text-center text-muted py-3">
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                    Loading avatars...
+                </div>
+            </div>
+        </div>
+
+        <!-- File Upload Section -->
+        <div class="mb-2">
+            <label class="form-label">Or upload a custom image:</label>
+            <input asp-for="ProfileImageFile" type="file" class="form-control" id="customFileUpload" data-val="false" accept="image/jpeg,image/jpg,image/png,image/gif" />
+            <span asp-validation-for="ProfileImageFile" class="text-danger"></span>
+            <small class="form-text text-muted">Upload a custom image (JPG, PNG, GIF - Max 5MB)</small>
+        </div>
     </div>
 
     <div class="form-group">
@@ -78,6 +116,125 @@
     <a asp-action="Profile" class="btn btn-secondary">Cancel</a>
 </form>
 
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
+<script>
+    let avatarsLoaded = false;
+    let selectedAvatarPath = '';
+
+    // Show/Hide Avatar Gallery
+    document.getElementById('showAvatarsBtn').addEventListener('click', function() {
+        const gallery = document.getElementById('avatarGallery');
+        gallery.style.display = 'block';
+        this.classList.add('d-none');
+        document.getElementById('hideAvatarsBtn').classList.remove('d-none');
+
+        // Load avatars only once
+        if (!avatarsLoaded) {
+            loadAvatars();
+        }
+    });
+
+    document.getElementById('hideAvatarsBtn').addEventListener('click', function() {
+        document.getElementById('avatarGallery').style.display = 'none';
+        this.classList.add('d-none');
+        document.getElementById('showAvatarsBtn').classList.remove('d-none');
+    });
+
+    // Load available avatars from server
+    function loadAvatars() {
+        fetch('/UserProfiles/GetAvailableAvatars')
+            .then(response => response.json())
+            .then(avatars => {
+                const container = document.getElementById('avatarContainer');
+
+                if (avatars.length === 0) {
+                    container.innerHTML = '<p class="text-muted">No default avatars available. Please add images to wwwroot/images/avatars/</p>';
+                    avatarsLoaded = true;
+                    return;
+                }
+
+                container.innerHTML = '';
+
+                avatars.forEach(avatarPath => {
+                    const img = document.createElement('img');
+                    img.src = avatarPath;
+                    img.alt = 'Avatar option';
+                    img.className = 'avatar-option';
+                    img.dataset.avatarPath = avatarPath;
+
+                    // Check if this is the current profile image
+                    const currentImg = document.getElementById('currentProfileImg');
+                    if (currentImg && currentImg.src.endsWith(avatarPath)) {
+                        img.classList.add('selected');
+                        selectedAvatarPath = avatarPath;
+                    }
+
+                    img.addEventListener('click', function() {
+                        // Remove selected class from all avatars
+                        document.querySelectorAll('.avatar-option').forEach(av => {
+                            av.classList.remove('selected');
+                        });
+
+                        // Add selected class to clicked avatar
+                        this.classList.add('selected');
+                        selectedAvatarPath = this.dataset.avatarPath;
+
+                        // Update hidden input
+                        document.getElementById('selectedAvatarInput').value = selectedAvatarPath;
+
+                        // Clear file upload if avatar is selected
+                        document.getElementById('customFileUpload').value = '';
+
+                        // Update preview
+                        const currentImg = document.getElementById('currentProfileImg');
+                        if (currentImg) {
+                            currentImg.src = avatarPath;
+                        } else {
+                            // Create preview if it doesn't exist
+                            const previewDiv = document.createElement('div');
+                            previewDiv.className = 'mb-3';
+                            previewDiv.innerHTML = '<img src="' + avatarPath + '" alt="Selected Avatar" id="currentProfileImg" style="max-width: 150px; max-height: 150px; border-radius: 50%; border: 3px solid #ddd;" /><p class="text-muted mb-0">Selected avatar</p>';
+
+                            // Insert after the Profile Image label
+                            const label = document.querySelector('label[for="ProfileImageUrl"]') || document.querySelector('.form-group label');
+                            if (label && label.parentElement) {
+                                label.parentElement.insertBefore(previewDiv, label.nextSibling);
+                            }
+                        }
+                    });
+
+                    container.appendChild(img);
+                });
+
+                avatarsLoaded = true;
+            })
+            .catch(error => {
+                console.error('Error loading avatars:', error);
+                document.getElementById('avatarContainer').innerHTML = '<p class="text-danger">Error loading avatars</p>';
+            });
+    }
+
+    // Clear avatar selection if user uploads custom file
+    document.getElementById('customFileUpload').addEventListener('change', function() {
+        if (this.files.length > 0) {
+            // Clear avatar selection
+            document.getElementById('selectedAvatarInput').value = '';
+            document.querySelectorAll('.avatar-option').forEach(av => {
+                av.classList.remove('selected');
+            });
+            selectedAvatarPath = '';
+
+            // Preview uploaded file
+            const file = this.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const currentImg = document.getElementById('currentProfileImg');
+                    if (currentImg) {
+                        currentImg.src = e.target.result;
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    });
+</script>

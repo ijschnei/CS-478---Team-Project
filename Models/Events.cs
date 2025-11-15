@@ -65,6 +65,8 @@ namespace CS478_EventPlannerProject.Models
         [MaxLength(500)]
         public string? BannerImageUrl { get; set; }
 
+        [NotMapped]
+        public IFormFile? BannerImageFile { get; set; }
         //Metadata
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
