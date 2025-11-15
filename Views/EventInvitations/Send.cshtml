@@ -1,0 +1,39 @@
+﻿@model CS478_EventPlannerProject.Models.Events
+@{
+	ViewData["Title"] = "Send Invitations";
+	var eventItem = ViewBag.Event as CS478_EventPlannerProject.Models.Events;
+	var availableUsers = ViewBag.AvailableUsers as List<SelectListItem>;
+}
+
+<h2>Send Invitations - @eventItem.EventName</h2>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5>Event Details</h5>
+        <p><strong>Date:</strong> @eventItem.StartDateTime.ToString("MMM dd, yyyy h:mm tt")</p>
+        <p><strong>Location:</strong> @eventItem.FormattedLocation</p>
+    </div>
+</div>
+
+<form asp-action="Send" method="post">
+    <div class="form-group mb-3">
+        <label>Select Users to Invite</label>
+        <select name="selectedUsers" class="form-control" multiple size="10" required>
+            @foreach (var user in availableUsers)
+            {
+                <option value="@user.Value">@user.Text</option>
+            }
+        </select>
+        <small class="form-text text-muted">Hold Ctrl (Windows) or Command (Mac) to select multiple users</small>
+    </div>
+
+    <div class="form-group mb-3">
+        <label for="customMessage">Custom Message (Optional)</label>
+        <textarea name="customMessage" class="form-control" rows="4"
+                  placeholder="Add a personal message to your invitation..."></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Send Invitations</button>
+    <a asp-controller="Events" asp-action="Details" asp-route-id="@eventItem.EventId"
+       class="btn btn-secondary">Cancel</a>
+</form>

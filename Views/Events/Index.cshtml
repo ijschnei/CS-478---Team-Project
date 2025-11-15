@@ -1,0 +1,60 @@
+﻿@model IEnumerable<CS478_EventPlannerProject.Models.Events>
+@{
+    ViewData["Title"] = "All Events";
+}
+
+<link rel="stylesheet" href="~/css/events.css" />
+
+<h2>All Events</h2>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Create New Event</a>
+    <a asp-action="MyEvents" class="btn btn-secondary">My Events</a>
+</p>
+
+@if (Model != null && Model.Any())
+{
+    <div class="row">
+        @foreach (var item in Model)
+        {
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    @if (!string.IsNullOrEmpty(item.BannerImageUrl))
+                    {
+                        <img src="@item.BannerImageUrl" class="card-img-top" alt="@item.EventName">
+                    }
+                    <div class="card-body">
+                        <h5 class="card-title">@item.EventName</h5>
+                        <p class="card-text">
+                            @if (!string.IsNullOrEmpty(item.EventDescription))
+                            {
+                                @item.EventDescription
+                            }
+                        </p>
+                        <p class="text-muted">
+                            <i class="bi bi-calendar"></i> @item.StartDateTime.ToString("MMM dd, yyyy h:mm tt")
+                        </p>
+                        <p class="text-muted">
+                            <i class="bi bi-geo-alt"></i>
+                            @if (item.IsVirtual)
+                            {
+                                <span>Virtual Event</span>
+                            }
+                            else
+                            {
+                                <span>@item.City, @item.State</span>
+                            }
+                        </p>
+                        <a asp-action="Details" asp-route-id="@item.EventId" class="btn btn-sm btn-primary">View Details</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="alert alert-info">
+        No events found. <a asp-action="Create">Create your first event!</a>
+    </div>
+}

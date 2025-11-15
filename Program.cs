@@ -1,10 +1,11 @@
 using CS478_EventPlannerProject.Data;
 using CS478_EventPlannerProject.Models;
-using CS478_EventPlannerProject.Services.Interfaces;
+using CS478_EventPlannerProject.Services;
 using CS478_EventPlannerProject.Services.Implementation;
+using CS478_EventPlannerProject.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -60,6 +61,8 @@ builder.Services.AddScoped<IThemeService, ThemeService>();
 builder.Services.AddScoped<ICustomFieldsService, CustomFieldService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddTransient<IEmailSender, EmailSenderService>();
+builder.Services.AddScoped<IEventGroupMessageService, EventGroupMessageService>();
+builder.Services.AddHostedService<EventCleanupService>();
 
 //AutoMapper
 //builder.Services.AddAutoMapper(typeof(Program));
@@ -74,7 +77,9 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
+    await EventSeeder.SeedEventsAsync(app);
     await UserSeeder.SeedDummyUsersAsync(app);
+   
 }
 else
 {

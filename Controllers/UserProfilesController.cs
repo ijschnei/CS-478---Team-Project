@@ -52,7 +52,7 @@ namespace CS478_EventPlannerProject.Controllers
                 TempData["Error"] = "Failed to load profile.";
                 return RedirectToAction("Index", "Dashboard");
             }
-           
+
         }
         // GET: UserProfiles/View/userId (View another user's public profile)
         public async Task<IActionResult> View(string userId)
@@ -68,7 +68,7 @@ namespace CS478_EventPlannerProject.Controllers
                 if (!profile.IsPublic && !User.IsInRole("Admin"))
                 {
                     var currentUser = await _userManager.GetUserAsync(User);
-                    if(currentUser == null || currentUser.Id != userId)
+                    if (currentUser == null || currentUser.Id != userId)
                     {
                         return Forbid();
                     }
@@ -81,10 +81,11 @@ namespace CS478_EventPlannerProject.Controllers
                 ViewBag.TotalPublicEvents = userEvents.Count(e => !e.IsPrivate);
                 var currentViewingUser = await _userManager.GetUserAsync(User);
                 ViewBag.IsCurrentUser = currentViewingUser?.Id == userId;
-                
+
 
                 return View("Profile", profile);
-            } catch (Exception)
+            }
+            catch (Exception)
             {
                 TempData["Error"] = "Failed to load user profile.";
                 return RedirectToAction("Index", "Dashboard");
@@ -119,31 +120,81 @@ namespace CS478_EventPlannerProject.Controllers
         // POST: UserProfiles/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit([Bind("UserProfileId,FirstName,LastName,DisplayName,Bio,ProfileImageUrl,DateOfBirth,Location,Website,FacebookUrl,TwitterUrl,LinkedInUrl,IsPublic")]UserProfiles profile)
+        public async Task<IActionResult> Edit(UserProfiles profile)
         {
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null)
                 return RedirectToAction("Login", "Account");
+
+            // Remove validation for properties that shouldn't be validated
+            ModelState.Remove("User");
+            ModelState.Remove("ProfileImageFile");
+
             //ensure the profile belongs to the current user (security check)
-            
             if (profile.UserProfileId != 0)
             {
                 var existingProfile = await _userProfileService.GetProfileByUserIdAsync(currentUser.Id);
-                if(existingProfile == null || existingProfile.UserProfileId != profile.UserProfileId)
+                if (existingProfile == null || existingProfile.UserProfileId != profile.UserProfileId)
                 {
                     return Forbid();
                 }
             }
+
             if (ModelState.IsValid)
             {
                 try
                 {
+                    // Handle file upload
+                    if (profile.ProfileImageFile != null && profile.ProfileImageFile.Length > 0)
+                    {
+                        // Validate file type
+                        var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif" };
+                        if (!allowedTypes.Contains(profile.ProfileImageFile.ContentType.ToLower()))
+                        {
+                            ModelState.AddModelError("ProfileImageFile", "Invalid file type. Please upload a JPEG, PNG, or GIF image.");
+                            return View(profile);
+                        }
+
+                        // Validate file size (5MB max)
+                        if (profile.ProfileImageFile.Length > 5 * 1024 * 1024)
+                        {
+                            ModelState.AddModelError("ProfileImageFile", "File too large. Please upload an image smaller than 5MB.");
+                            return View(profile);
+                        }
+
+                        // Create wwwroot/images/profiles folder if it doesn't exist
+                        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "profiles");
+                        Directory.CreateDirectory(uploadsFolder);
+
+                        // Generate unique filename
+                        var uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(profile.ProfileImageFile.FileName);
+                        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                        // Save the file
+                        using (var fileStream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await profile.ProfileImageFile.CopyToAsync(fileStream);
+                        }
+
+                        // Delete old image if exists
+                        if (!string.IsNullOrEmpty(profile.ProfileImageUrl) && profile.ProfileImageUrl.StartsWith("/images/"))
+                        {
+                            var oldImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", profile.ProfileImageUrl.TrimStart('/'));
+                            if (System.IO.File.Exists(oldImagePath))
+                            {
+                                System.IO.File.Delete(oldImagePath);
+                            }
+                        }
+
+                        // Store the relative path in the database
+                        profile.ProfileImageUrl = "/images/profiles/" + uniqueFileName;
+                    }
+
                     profile.UserId = currentUser.Id;
                     UserProfiles? updatedProfile;
+
                     if (profile.UserProfileId == 0)
                     {
-                        //create new profile
-                        
                         updatedProfile = await _userProfileService.CreateProfileAsync(profile);
                     }
                     else
@@ -151,6 +202,7 @@ namespace CS478_EventPlannerProject.Controllers
                         //update existing profile
                         updatedProfile = await _userProfileService.UpdateProfileAsync(profile);
                     }
+
                     if (updatedProfile != null)
                     {
                         TempData["Success"] = "Profile updated successfully!";
@@ -158,17 +210,18 @@ namespace CS478_EventPlannerProject.Controllers
                     }
                     TempData["Error"] = "Failed to update profile.";
                 }
-                catch(InvalidOperationException ex)
+                catch (InvalidOperationException ex)
                 {
                     ModelState.AddModelError("", ex.Message);
                 }
-                catch(ArgumentException ex)
+                catch (ArgumentException ex)
                 {
                     ModelState.AddModelError("", ex.Message);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     TempData["Error"] = "An error occurred while updating the profile.";
+                    System.Diagnostics.Debug.WriteLine($"Error updating profile: {ex.Message}");
                 }
             }
             return View(profile);
@@ -228,14 +281,14 @@ namespace CS478_EventPlannerProject.Controllers
                     return View(results);
                 }
             }
-                ViewBag.SearchTerm = searchTerm;
-                return View(results);          
+            ViewBag.SearchTerm = searchTerm;
+            return View(results);
         }
         // GET: UserProfiles/SearchApi - Returns JSON for AJAX
         [HttpGet]
         public async Task<IActionResult> SearchApi(string searchTerm)
         {
-            if(string.IsNullOrWhiteSpace(searchTerm) || searchTerm.Length < 2)
+            if (string.IsNullOrWhiteSpace(searchTerm) || searchTerm.Length < 2)
             {
                 return Json(new List<object>());
             }
@@ -281,7 +334,7 @@ namespace CS478_EventPlannerProject.Controllers
             try
             {
                 var currentUser = await _userManager.GetUserAsync(User);
-                if (currentUser == null)           
+                if (currentUser == null)
                     return Json(new { success = false, message = "User not authenticated." });
                 //validate file type
                 var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif" };
@@ -291,18 +344,41 @@ namespace CS478_EventPlannerProject.Controllers
                 }
 
                 //validate file size (ex. 5MB max)
-                if(profileImage.Length > 5 * 1024 * 1024)
+                if (profileImage.Length > 5 * 1024 * 1024)
                 {
                     return Json(new { success = false, message = "File too large. Please upload an image smaller than 5MB." });
                 }
 
-                //TODO: need to generate unique filename and save to storage and then updated profile with the new image url
-                //for now using placeholder URL
-                var imageUrl = "/images/profiles/placeholder.jpg"; //this would be actual uploaded image url
+                // Create wwwroot/images/profiles folder if it doesn't exist
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "profiles");
+                Directory.CreateDirectory(uploadsFolder);
+
+                // Generate unique filename
+                var uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(profileImage.FileName);
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                // Save the file
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await profileImage.CopyToAsync(fileStream);
+                }
+
+                var imageUrl = "/images/profiles/" + uniqueFileName;
+
                 //update user profile with new image url
                 var profile = await _userProfileService.GetProfileByUserIdAsync(currentUser.Id);
-                if(profile != null)
+                if (profile != null)
                 {
+                    // Delete old image if exists
+                    if (!string.IsNullOrEmpty(profile.ProfileImageUrl) && profile.ProfileImageUrl.StartsWith("/images/"))
+                    {
+                        var oldImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", profile.ProfileImageUrl.TrimStart('/'));
+                        if (System.IO.File.Exists(oldImagePath))
+                        {
+                            System.IO.File.Delete(oldImagePath);
+                        }
+                    }
+
                     profile.ProfileImageUrl = imageUrl;
                     await _userProfileService.UpdateProfileAsync(profile);
                 }
@@ -311,11 +387,11 @@ namespace CS478_EventPlannerProject.Controllers
                     success = true,
                     message = "Profile image uploaded successfully!",
                     imageUrl = imageUrl
-                });                  
+                });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return Json(new { success = false, message = "An error occurred while uploading the image." });
+                return Json(new { success = false, message = "An error occurred while uploading the image: " + ex.Message });
             }
         }
         // GET: UserProfiles/GetProfileData (AJAX endpoint)
@@ -338,7 +414,7 @@ namespace CS478_EventPlannerProject.Controllers
                 if (!profile.IsPublic)
                 {
                     var currentUser = await _userManager.GetUserAsync(User);
-                    if(currentUser == null || (currentUser.Id != userId && !User.IsInRole("Admin")))
+                    if (currentUser == null || (currentUser.Id != userId && !User.IsInRole("Admin")))
                     {
                         return Json(new { success = false });
                     }
@@ -365,4 +441,5 @@ namespace CS478_EventPlannerProject.Controllers
             }
         }
     }
+
 }

@@ -1,0 +1,248 @@
+﻿@model CS478_EventPlannerProject.Models.Events
+@{
+    ViewData["Title"] = "Create Event";
+}
+
+<link rel="stylesheet" href="~/css/events.css" />
+
+<h2>Create New Event</h2>
+
+
+<div class="row">
+    <div class="col-md-8">
+        <form asp-action="Create" method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <!-- Basic Information Section -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5>Event Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label asp-for="EventName" class="control-label">Event Name *</label>
+                        <input asp-for="EventName" class="form-control" placeholder="Enter event name" />
+                        <span asp-validation-for="EventName" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mt-3">
+                        <label asp-for="EventDescription" class="control-label">Description</label>
+                        <textarea asp-for="EventDescription" class="form-control" rows="3" placeholder="Describe your event"></textarea>
+                        <span asp-validation-for="EventDescription" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mt-3">
+                        <label asp-for="EventDetails" class="control-label">Additional Details</label>
+                        <textarea asp-for="EventDetails" class="form-control" rows="2" placeholder="Any additional information"></textarea>
+                        <span asp-validation-for="EventDetails" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Date and Time Section -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5>Date & Time</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="StartDateTime" class="control-label">Start Date & Time *</label>
+                                <input asp-for="StartDateTime" type="datetime-local" class="form-control" />
+                                <span asp-validation-for="StartDateTime" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="EndDateTime" class="control-label">End Date & Time *</label>
+                                <input asp-for="EndDateTime" type="datetime-local" class="form-control" />
+                                <span asp-validation-for="EndDateTime" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="TimeZone" class="control-label">Time Zone</label>
+                                <input asp-for="TimeZone" class="form-control" placeholder="e.g., EST, PST, UTC" />
+                                <span asp-validation-for="TimeZone" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mt-4">
+                                <input asp-for="IsAllDay" class="form-check-input" type="checkbox" />
+                                <label asp-for="IsAllDay" class="form-check-label">All Day Event</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location Section -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5>Location</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check mb-3">
+                        <input asp-for="IsVirtual" class="form-check-input" type="checkbox" id="isVirtualCheck" />
+                        <label asp-for="IsVirtual" class="form-check-label" for="isVirtualCheck">
+                            This is a virtual event
+                        </label>
+                    </div>
+
+                    <div id="physicalLocation">
+                        <div class="form-group">
+                            <label asp-for="VenueName" class="control-label">Venue Name</label>
+                            <input asp-for="VenueName" class="form-control" placeholder="Enter venue name" />
+                            <span asp-validation-for="VenueName" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <label asp-for="Address" class="control-label">Street Address</label>
+                            <input asp-for="Address" class="form-control" placeholder="Street address" />
+                            <span asp-validation-for="Address" class="text-danger"></span>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="City" class="control-label">City</label>
+                                    <input asp-for="City" class="form-control" />
+                                    <span asp-validation-for="City" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label asp-for="State" class="control-label">State</label>
+                                    <input asp-for="State" class="form-control" placeholder="e.g., CA" />
+                                    <span asp-validation-for="State" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label asp-for="PostalCode" class="control-label">Postal Code</label>
+                                    <input asp-for="PostalCode" class="form-control" />
+                                    <span asp-validation-for="PostalCode" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <label asp-for="Country" class="control-label">Country</label>
+                            <input asp-for="Country" class="form-control" placeholder="e.g., United States" />
+                            <span asp-validation-for="Country" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div id="virtualLocation" style="display: none;">
+                        <div class="form-group">
+                            <label asp-for="VirtualMeetingUrl" class="control-label">Virtual Meeting URL</label>
+                            <input asp-for="VirtualMeetingUrl" type="url" class="form-control" placeholder="https://zoom.us/j/123456789" />
+                            <span asp-validation-for="VirtualMeetingUrl" class="text-danger"></span>
+                            <small class="form-text text-muted">Enter the link to your Zoom, Teams, or other virtual meeting</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5>Event Settings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label asp-for="MaxAttendees" class="control-label">Maximum Attendees</label>
+                        <input asp-for="MaxAttendees" type="number" class="form-control" placeholder="Leave blank for unlimited" />
+                        <span asp-validation-for="MaxAttendees" class="text-danger"></span>
+                        <small class="form-text text-muted">Maximum number of people who can attend (optional)</small>
+                    </div>
+
+                    <div class="form-check mt-3">
+                        <input asp-for="IsPrivate" class="form-check-input" type="checkbox" />
+                        <label asp-for="IsPrivate" class="form-check-label">Private Event</label>
+                        <small class="form-text text-muted d-block">Only invited users can see and join this event</small>
+                    </div>
+
+                    <div class="form-check mt-3">
+                        <input asp-for="RequiresApproval" class="form-check-input" type="checkbox" />
+                        <label asp-for="RequiresApproval" class="form-check-label">Require Approval</label>
+                        <small class="form-text text-muted d-block">Attendees must be approved before joining</small>
+                    </div>
+
+                   <!--Ignore-->
+
+                    <div class="form-check mt-3">
+                        <input asp-for="AllowGuestList" class="form-check-input" type="checkbox" />
+                        <label asp-for="AllowGuestList" class="form-check-label">Allow Guest List</label>
+                        <small class="form-text text-muted d-block">Show the list of attendees to everyone</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appearance Section -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5>Appearance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label asp-for="BannerImageFile" class="control-label">Banner Image</label>
+                        <input asp-for="BannerImageFile" type="file" class="form-control" accept="image/*" data-val="false" />
+                        <span asp-validation-for="BannerImageFile" class="text-danger"></span>
+                        <small class="form-text text-muted">Upload an image for your event banner (JPG, PNG, GIF)</small>
+
+                        @if (!string.IsNullOrEmpty(Model.BannerImageUrl))
+                        {
+                            <div class="mt-2">
+                                <img src="@Model.BannerImageUrl" alt="Current Banner" style="max-width: 200px; max-height: 150px; border-radius: 8px;" />
+                                <p class="text-muted">Current banner image</p>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="form-group mt-3">
+                        <label asp-for="ThemeId" class="control-label">Theme</label>
+                        <input asp-for="ThemeId" type="number" class="form-control" />
+                        <span asp-validation-for="ThemeId" class="text-danger"></span>
+                        <small class="form-text text-muted">Select a theme ID (optional)</small>
+                    </div>
+
+                    <div class="form-group mt-3">
+                        <label asp-for="CustomCss" class="control-label">Custom CSS</label>
+                        <textarea asp-for="CustomCss" class="form-control" rows="3" placeholder="/* Custom CSS styles */"></textarea>
+                        <span asp-validation-for="CustomCss" class="text-danger"></span>
+                        <small class="form-text text-muted">Add custom CSS for advanced styling (optional)</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Create Event</button>
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        // Toggle between physical and virtual location fields
+        document.getElementById('isVirtualCheck').addEventListener('change', function() {
+            if (this.checked) {
+                document.getElementById('physicalLocation').style.display = 'none';
+                document.getElementById('virtualLocation').style.display = 'block';
+            } else {
+                document.getElementById('physicalLocation').style.display = 'block';
+                document.getElementById('virtualLocation').style.display = 'none';
+            }
+        });
+    </script>
+}
