@@ -102,7 +102,12 @@
 
                         <div class="form-group mt-3">
                             <label asp-for="Address" class="control-label">Street Address</label>
-                            <input asp-for="Address" class="form-control" placeholder="Street address" />
+                            <div class="input-group">
+                                <input asp-for="Address" class="form-control" id="addressInput" placeholder="Street address" />
+                                <button type="button" class="btn btn-outline-secondary" onclick="getEventLocation()">
+                                    <i class="bi bi-geo-alt-fill"></i> Use My Location
+                                </button>
+                            </div>
                             <span asp-validation-for="Address" class="text-danger"></span>
                         </div>
 
@@ -110,21 +115,21 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label asp-for="City" class="control-label">City</label>
-                                    <input asp-for="City" class="form-control" />
+                                    <input asp-for="City" class="form-control" id="cityInput" />
                                     <span asp-validation-for="City" class="text-danger"></span>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label asp-for="State" class="control-label">State</label>
-                                    <input asp-for="State" class="form-control" placeholder="e.g., CA" />
+                                    <input asp-for="State" class="form-control" id="stateInput" placeholder="e.g., CA" />
                                     <span asp-validation-for="State" class="text-danger"></span>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label asp-for="PostalCode" class="control-label">Postal Code</label>
-                                    <input asp-for="PostalCode" class="form-control" />
+                                    <input asp-for="PostalCode" class="form-control" id="postalCodeInput" />
                                     <span asp-validation-for="PostalCode" class="text-danger"></span>
                                 </div>
                             </div>
@@ -132,7 +137,7 @@
 
                         <div class="form-group mt-3">
                             <label asp-for="Country" class="control-label">Country</label>
-                            <input asp-for="Country" class="form-control" placeholder="e.g., United States" />
+                            <input asp-for="Country" class="form-control" id="countryInput" placeholder="e.g., United States" />
                             <span asp-validation-for="Country" class="text-danger"></span>
                         </div>
                     </div>
@@ -173,7 +178,7 @@
                         <small class="form-text text-muted d-block">Attendees must be approved before joining</small>
                     </div>
 
-                   <!--Ignore-->
+                    <!--Ignore-->
 
                     <div class="form-check mt-3">
                         <input asp-for="AllowGuestList" class="form-check-input" type="checkbox" />
@@ -244,5 +249,82 @@
                 document.getElementById('virtualLocation').style.display = 'none';
             }
         });
+
+        // Get event location from geolocation
+        function getEventLocation() {
+            const addressInput = document.getElementById('addressInput');
+            const cityInput = document.getElementById('cityInput');
+            const stateInput = document.getElementById('stateInput');
+            const postalCodeInput = document.getElementById('postalCodeInput');
+            const countryInput = document.getElementById('countryInput');
+
+            if (!navigator.geolocation) {
+                alert("Geolocation is not supported by your browser.");
+                return;
+            }
+
+            // Show loading state
+            addressInput.value = "Getting location...";
+
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+
+                    // Use OpenStreetMap's Nominatim API for reverse geocoding
+                    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('Location data received:', data); // Debug log
+                            const address = data.address;
+
+                            // Fill in address fields with enhanced city detection
+                            const street = `${address.house_number || ''} ${address.road || ''}`.trim();
+                            addressInput.value = street || '';
+
+                            // Try multiple city fields in order of preference
+                            const city = address.city
+                                      || address.town
+                                      || address.village
+                                      || address.municipality
+                                      || address.county
+                                      || address.hamlet
+                                      || '';
+
+                            cityInput.value = city;
+                            stateInput.value = address.state || address.region || '';
+                            postalCodeInput.value = address.postcode || '';
+                            countryInput.value = address.country || '';
+
+                            // If city is still empty, log the full address for debugging
+                            if (!city) {
+                                console.warn('Could not determine city. Full address data:', address);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error getting location details:', error);
+                            addressInput.value = '';
+                            alert('Could not retrieve address details. Please enter manually.');
+                        });
+                },
+                function(error) {
+                    addressInput.value = '';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            alert("Location access denied. Please enable location permissions in your browser.");
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            alert("Location information is unavailable.");
+                            break;
+                        case error.TIMEOUT:
+                            alert("The request to get your location timed out.");
+                            break;
+                        default:
+                            alert("An unknown error occurred.");
+                            break;
+                    }
+                }
+            );
+        }
     </script>
 }
