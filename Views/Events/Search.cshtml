@@ -1,0 +1,155 @@
+﻿@model IEnumerable<CS478_EventPlannerProject.Models.Events>
+@{
+    ViewData["Title"] = "Search Events";
+}
+
+<link rel="stylesheet" href="~/css/events.css" />
+
+<div class="container mt-4">
+    <h2>Search Events</h2>
+
+    <!-- Search Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form asp-action="Search" method="get">
+                <div class="row">
+                    <div class="col-md-10">
+                        <div class="form-group">
+                            <input type="text"
+                                   name="searchTerm"
+                                   class="form-control"
+                                   placeholder="Search by event name, description, location, or venue..."
+                                   value="@ViewBag.SearchTerm"
+                                   autofocus />
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ViewBag.SearchTerm))
+    {
+        <div class="mb-3">
+            <h5>Search Results for: "<strong>@ViewBag.SearchTerm</strong>"</h5>
+            <a asp-action="Index" class="btn btn-sm btn-secondary">
+                <i class="bi bi-x-circle"></i> Clear Search
+            </a>
+        </div>
+    }
+
+    <!-- Search Results -->
+    @if (Model != null && Model.Any())
+    {
+        <div class="row">
+            @foreach (var eventItem in Model)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        @if (!string.IsNullOrEmpty(eventItem.BannerImageUrl))
+                        {
+                            <img src="@eventItem.BannerImageUrl" class="card-img-top" alt="@eventItem.EventName" style="height: 200px; object-fit: cover;" />
+                        }
+                        else
+                        {
+                            <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="bi bi-calendar-event text-white" style="font-size: 4rem;"></i>
+                            </div>
+                        }
+                        <div class="card-body">
+                            <h5 class="card-title">@eventItem.EventName</h5>
+
+                            @if (!string.IsNullOrEmpty(eventItem.EventDescription))
+                            {
+                                <p class="card-text text-muted">
+                                    @(eventItem.EventDescription.Length > 100
+                                                            ? eventItem.EventDescription.Substring(0, 100) + "..."
+                                                            : eventItem.EventDescription)
+                    </p>
+                                        }
+
+                            <div class="mb-2">
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar"></i>
+                                    @eventItem.StartDateTime.ToString("MMM dd, yyyy")
+                                    at @eventItem.StartDateTime.ToString("h:mm tt")
+                                </small>
+                            </div>
+
+                            @if (eventItem.IsVirtual)
+                            {
+                                <div class="mb-2">
+                                    <small class="text-muted">
+                                        <i class="bi bi-camera-video"></i> Virtual Event
+                                    </small>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="mb-2">
+                                    <small class="text-muted">
+                                        <i class="bi bi-geo-alt"></i>
+                                        @if (!string.IsNullOrEmpty(eventItem.City))
+                                        {
+                                            <span>@eventItem.City, @eventItem.State</span>
+                                        }
+                                        else if (!string.IsNullOrEmpty(eventItem.VenueName))
+                                        {
+                                            <span>@eventItem.VenueName</span>
+                                        }
+                                        else
+                                        {
+                                            <span>Location TBD</span>
+                                        }
+                                    </small>
+                                </div>
+                            }
+
+                            @if (eventItem.MaxAttendees.HasValue)
+                            {
+                                <div class="mb-2">
+                                    <small class="text-muted">
+                                        <i class="bi bi-people"></i>
+                                        Max Attendees: @eventItem.MaxAttendees
+                                    </small>
+                                </div>
+                            }
+
+                            @if (eventItem.IsPrivate)
+                            {
+                                <span class="badge bg-warning text-dark">
+                                    <i class="bi bi-lock"></i> Private
+                                </span>
+                            }
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <a asp-action="Details" asp-route-id="@eventItem.EventId" class="btn btn-primary w-100">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(ViewBag.SearchTerm))
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
+            No events found matching "<strong>@ViewBag.SearchTerm</strong>".
+            Try different keywords or <a asp-action="Index">browse all events</a>.
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-secondary">
+            <i class="bi bi-search"></i>
+            Enter a search term to find events by name, description, location, or venue.
+        </div>
+    }
+</div>
