@@ -81,7 +81,7 @@ namespace CS478_EventPlannerProject.Services.Implementation
         }
         public async Task<Events?> UpdateEventAsync(Events eventModel)
         {
-           
+
             var existingEvent = await _context.Events.FindAsync(eventModel.EventId);
             if (existingEvent == null) return null;
             //CSS validation to prevent harmful script injection
@@ -136,7 +136,7 @@ namespace CS478_EventPlannerProject.Services.Implementation
                 "onload"
             };
             var cssLower = css.ToLower();
-            return !dangerousPatterns.Any(pattern=>cssLower.Contains(pattern));
+            return !dangerousPatterns.Any(pattern => cssLower.Contains(pattern));
         }
         public async Task<bool> DeleteEventAsync(int id)
         {
@@ -160,7 +160,7 @@ namespace CS478_EventPlannerProject.Services.Implementation
             if (eventItem == null) return false;
             //determine initial status based on event settings
             string initialStatus;
-            if(attendeeType == "organizer" || attendeeType == "co-organizer")
+            if (attendeeType == "organizer" || attendeeType == "co-organizer")
             {
                 initialStatus = "accepted"; //organizers always accepted
             }
@@ -172,14 +172,14 @@ namespace CS478_EventPlannerProject.Services.Implementation
             {
                 initialStatus = "accepted"; //auto-accept if no approval required
             }
-                var eventAttendee = new EventAttendees
-                {
-                    EventId = eventId,
-                    UserId = userId,
-                    AttendeeType = attendeeType,
-                    Status = initialStatus,
-                    RSVP_Date = DateTime.UtcNow
-                };
+            var eventAttendee = new EventAttendees
+            {
+                EventId = eventId,
+                UserId = userId,
+                AttendeeType = attendeeType,
+                Status = initialStatus,
+                RSVP_Date = DateTime.UtcNow
+            };
 
             _context.EventAttendees.Add(eventAttendee);
             await _context.SaveChangesAsync();
@@ -216,7 +216,14 @@ namespace CS478_EventPlannerProject.Services.Implementation
                 .ThenBy(ea => ea.RSVP_Date)
                 .ToListAsync();
         }
-        public async Task<IEnumerable<Events>> SearchEventsAsync(string searchTerm, int? categoryId = null)
+        public async Task<IEnumerable<Events>> SearchEventsAsync(
+    string? searchTerm = null,
+    int? categoryId = null,
+    string? location = null,
+    string? eventType = null,
+    string? dateRange = null,
+    DateTime? startDate = null,
+    DateTime? endDate = null)
         {
             var query = _context.Events
                 .Include(e => e.Creator)
@@ -226,18 +233,97 @@ namespace CS478_EventPlannerProject.Services.Implementation
                 .Include(e => e.Attendees)
                 .Where(e => !e.IsDeleted && e.IsActive);
 
+            // Search term filter
             if (!string.IsNullOrEmpty(searchTerm))
             {
                 query = query.Where(e =>
-                e.EventName.Contains(searchTerm) ||
-                e.EventDescription!.Contains(searchTerm) ||
-                e.City!.Contains(searchTerm) ||
-                e.VenueName!.Contains(searchTerm));
+                    e.EventName.Contains(searchTerm) ||
+                    (e.EventDescription != null && e.EventDescription.Contains(searchTerm)) ||
+                    (e.City != null && e.City.Contains(searchTerm)) ||
+                    (e.VenueName != null && e.VenueName.Contains(searchTerm)));
             }
 
+            // Category filter
             if (categoryId.HasValue)
             {
                 query = query.Where(e => e.Categories.Any(c => c.CategoryId == categoryId.Value));
+            }
+
+            // Location filter
+            if (!string.IsNullOrEmpty(location))
+            {
+                query = query.Where(e =>
+                    (e.City != null && e.City.Contains(location)) ||
+                    (e.State != null && e.State.Contains(location)) ||
+                    (e.Country != null && e.Country.Contains(location)));
+            }
+
+            // Event type filter (virtual vs in-person)
+            if (!string.IsNullOrEmpty(eventType))
+            {
+                if (eventType.ToLower() == "virtual")
+                {
+                    query = query.Where(e => e.IsVirtual);
+                }
+                else if (eventType.ToLower() == "in-person")
+                {
+                    query = query.Where(e => !e.IsVirtual);
+                }
+            }
+
+            // Date range filter
+            var now = DateTime.UtcNow;
+            if (!string.IsNullOrEmpty(dateRange))
+            {
+                switch (dateRange.ToLower())
+                {
+                    case "today":
+                        var todayStart = now.Date;
+                        var todayEnd = todayStart.AddDays(1);
+                        query = query.Where(e => e.StartDateTime >= todayStart && e.StartDateTime < todayEnd);
+                        break;
+
+                    case "tomorrow":
+                        var tomorrowStart = now.Date.AddDays(1);
+                        var tomorrowEnd = tomorrowStart.AddDays(1);
+                        query = query.Where(e => e.StartDateTime >= tomorrowStart && e.StartDateTime < tomorrowEnd);
+                        break;
+
+                    case "this-week":
+                        var weekStart = now.Date;
+                        var weekEnd = weekStart.AddDays(7);
+                        query = query.Where(e => e.StartDateTime >= weekStart && e.StartDateTime < weekEnd);
+                        break;
+
+                    case "next-week":
+                        var nextWeekStart = now.Date.AddDays(7);
+                        var nextWeekEnd = nextWeekStart.AddDays(7);
+                        query = query.Where(e => e.StartDateTime >= nextWeekStart && e.StartDateTime < nextWeekEnd);
+                        break;
+
+                    case "this-month":
+                        var monthStart = new DateTime(now.Year, now.Month, 1);
+                        var monthEnd = monthStart.AddMonths(1);
+                        query = query.Where(e => e.StartDateTime >= monthStart && e.StartDateTime < monthEnd);
+                        break;
+
+                    case "next-month":
+                        var nextMonthStart = new DateTime(now.Year, now.Month, 1).AddMonths(1);
+                        var nextMonthEnd = nextMonthStart.AddMonths(1);
+                        query = query.Where(e => e.StartDateTime >= nextMonthStart && e.StartDateTime < nextMonthEnd);
+                        break;
+                }
+            }
+
+            // Custom date range filter
+            if (startDate.HasValue)
+            {
+                query = query.Where(e => e.StartDateTime >= startDate.Value);
+            }
+            if (endDate.HasValue)
+            {
+                var endOfDay = endDate.Value.Date.AddDays(1).AddTicks(-1);
+                query = query.Where(e => e.StartDateTime <= endOfDay);
             }
 
             return await query

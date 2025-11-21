@@ -11,11 +11,13 @@ namespace CS478_EventPlannerProject.Controllers
     public class EventsController : Controller
     {
         private readonly IEventService _eventService;
+        private readonly ICategoryService _categoryService;
         private readonly UserManager<Users> _userManager;
 
-        public EventsController(IEventService eventService, UserManager<Users> userManager)
+        public EventsController(IEventService eventService, ICategoryService categoryService, UserManager<Users> userManager)
         {
             _eventService = eventService;
+            _categoryService = categoryService;
             _userManager = userManager;
         }
         // GET: Events
@@ -300,14 +302,40 @@ namespace CS478_EventPlannerProject.Controllers
         }
 
         //GET: Events/Search
-        public async Task<IActionResult> Search(string searchTerm, int? categoryId)
+        public async Task<IActionResult> Search(
+            string? searchTerm = null,
+            int? categoryId = null,
+            string? location = null,
+            string? eventType = null,
+            string? dateRange = null,
+            DateTime? startDate = null,
+            DateTime? endDate = null)
         {
-            var events = await _eventService.SearchEventsAsync(searchTerm, categoryId);
+            // Get categories for the dropdown
+            var categories = await _categoryService.GetAllCategoriesAsync();
+            ViewBag.Categories = categories.ToList();
+
+            // Perform search
+            var events = await _eventService.SearchEventsAsync(
+                searchTerm,
+                categoryId,
+                location,
+                eventType,
+                dateRange,
+                startDate,
+                endDate);
+
+            // Pass search parameters back to view for display
             ViewBag.SearchTerm = searchTerm;
             ViewBag.CategoryId = categoryId;
+            ViewBag.Location = location;
+            ViewBag.EventType = eventType;
+            ViewBag.DateRange = dateRange;
+            ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
+            ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
+
             return View(events);
         }
-
 
         // POST: Events/RemoveAttendee
         [HttpPost]

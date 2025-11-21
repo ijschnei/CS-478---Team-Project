@@ -14,7 +14,14 @@ namespace CS478_EventPlannerProject.Services.Interfaces
         Task<bool> UpdateAttendeeStatusAsync(int eventId, string userId, string status);
         Task<bool> RemoveAttendeeAsync(int eventId, string userId);
         Task<IEnumerable<EventAttendees>> GetEventAttendeesAsync(int eventId);
-        Task<IEnumerable<Events>> SearchEventsAsync(string searchTerm, int? categoryId = null);
+        Task<IEnumerable<Events>> SearchEventsAsync(
+         string? searchTerm = null,
+         int? categoryId = null,
+         string? location = null,
+         string? eventType = null,
+         string? dateRange = null,
+         DateTime? startDate = null,
+        DateTime? endDate = null);
     }
 
 

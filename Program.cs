@@ -77,9 +77,10 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
-    await EventSeeder.SeedEventsAsync(app);
+    await CategorySeeder.SeedCategoriesAsync(app);
     await UserSeeder.SeedDummyUsersAsync(app);
-   
+    await EventSeeder.SeedEventsAsync(app);
+    await EventCategorySeeder.AssignCategoriesToEventsAsync(app);
 }
 else
 {
