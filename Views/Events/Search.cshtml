@@ -1,0 +1,254 @@
+﻿@model IEnumerable<CS478_EventPlannerProject.Models.Events>
+@{
+    ViewData["Title"] = "Search Events";
+    var categories = ViewBag.Categories as List<CS478_EventPlannerProject.Models.EventCategory> ?? new List<CS478_EventPlannerProject.Models.EventCategory>();
+}
+
+<link rel="stylesheet" href="~/css/events.css" />
+
+<div class="container mt-4">
+    <h2>Search Events</h2>
+
+    <form asp-action="Search" method="get" class="mb-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <!-- Search Term -->
+                    <div class="col-md-6 mb-3">
+                        <label for="searchTerm" class="form-label">Search</label>
+                        <input type="text"
+                               name="searchTerm"
+                               id="searchTerm"
+                               class="form-control"
+                               placeholder="Search by name, description, venue, or city..."
+                               value="@ViewBag.SearchTerm" />
+                    </div>
+
+                    <!-- Category Filter -->
+                    <div class="col-md-6 mb-3">
+                        <label for="categoryId" class="form-label">Category</label>
+                        <select name="categoryId" id="categoryId" class="form-select">
+                            <option value="">All Categories</option>
+                            @foreach (var category in categories)
+                            {
+                                <option value="@category.Id"
+                                        selected="@(ViewBag.CategoryId == category.Id)">
+                                    @category.Name
+                                </option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Location -->
+                    <div class="col-md-4 mb-3">
+                        <label for="location" class="form-label">Location</label>
+                        <input type="text"
+                               name="location"
+                               id="location"
+                               class="form-control"
+                               placeholder="City or State"
+                               value="@ViewBag.Location" />
+                    </div>
+
+                    <!-- Event Type -->
+                    <div class="col-md-4 mb-3">
+                        <label for="eventType" class="form-label">Event Type</label>
+                        <select name="eventType" id="eventType" class="form-select">
+                            <option value="">All Types</option>
+                            <option value="virtual" selected="@(ViewBag.EventType == "virtual")">Virtual</option>
+                            <option value="in-person" selected="@(ViewBag.EventType == "in-person")">In-Person</option>
+                        </select>
+                    </div>
+
+                    <!-- Date Range -->
+                    <div class="col-md-4 mb-3">
+                        <label for="dateRange" class="form-label">When</label>
+                        <select name="dateRange" id="dateRange" class="form-select">
+                            <option value="">Any Time</option>
+                            <option value="today" selected="@(ViewBag.DateRange == "today")">Today</option>
+                            <option value="tomorrow" selected="@(ViewBag.DateRange == "tomorrow")">Tomorrow</option>
+                            <option value="this-week" selected="@(ViewBag.DateRange == "this-week")">This Week</option>
+                            <option value="next-week" selected="@(ViewBag.DateRange == "next-week")">Next Week</option>
+                            <option value="this-month" selected="@(ViewBag.DateRange == "this-month")">This Month</option>
+                            <option value="next-month" selected="@(ViewBag.DateRange == "next-month")">Next Month</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Custom Date Range -->
+                    <div class="col-md-6 mb-3">
+                        <label for="startDate" class="form-label">Start Date</label>
+                        <input type="date"
+                               name="startDate"
+                               id="startDate"
+                               class="form-control"
+                               value="@ViewBag.StartDate" />
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="endDate" class="form-label">End Date</label>
+                        <input type="date"
+                               name="endDate"
+                               id="endDate"
+                               class="form-control"
+                               value="@ViewBag.EndDate" />
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                    <a asp-action="Search" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Clear Filters
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- Active Filters Display -->
+    @if (!string.IsNullOrEmpty(ViewBag.SearchTerm as string) ||
+        ViewBag.CategoryId != null ||
+        !string.IsNullOrEmpty(ViewBag.Location as string) ||
+        !string.IsNullOrEmpty(ViewBag.EventType as string) ||
+        !string.IsNullOrEmpty(ViewBag.DateRange as string))
+    {
+        <div class="alert alert-info">
+            <strong>Active Filters:</strong>
+            @if (!string.IsNullOrEmpty(ViewBag.SearchTerm as string))
+            {
+                <span class="badge bg-primary me-2">Search: @ViewBag.SearchTerm</span>
+            }
+            @if (ViewBag.CategoryId != null)
+            {
+                var selectedCategory = categories.FirstOrDefault(c => c.Id == ViewBag.CategoryId);
+                if (selectedCategory != null)
+                {
+                    <span class="badge bg-primary me-2">Category: @selectedCategory.Name</span>
+                }
+            }
+            @if (!string.IsNullOrEmpty(ViewBag.Location as string))
+            {
+                <span class="badge bg-primary me-2">Location: @ViewBag.Location</span>
+            }
+            @if (!string.IsNullOrEmpty(ViewBag.EventType as string))
+            {
+                <span class="badge bg-primary me-2">Type: @ViewBag.EventType</span>
+            }
+            @if (!string.IsNullOrEmpty(ViewBag.DateRange as string))
+            {
+                <span class="badge bg-primary me-2">When: @ViewBag.DateRange</span>
+            }
+        </div>
+    }
+
+    <!-- Results Count -->
+    <h4 class="mb-3">
+        @if (Model != null && Model.Any())
+        {
+            <text>Found @Model.Count() event(s)</text>
+        }
+        else
+        {
+            <text>Search Results</text>
+        }
+    </h4>
+
+    <!-- Search Results -->
+    @if (Model != null && Model.Any())
+    {
+        <div class="row">
+            @foreach (var eventItem in Model)
+            {
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        @if (!string.IsNullOrEmpty(eventItem.BannerImageUrl))
+                        {
+                            <img src="@eventItem.BannerImageUrl" class="card-img-top" alt="@eventItem.EventName" style="height: 200px; object-fit: cover;">
+                        }
+                        else
+                        {
+                            <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="bi bi-calendar-event" style="font-size: 3rem; color: white;"></i>
+                            </div>
+                        }
+
+                        <div class="card-body">
+                            <h5 class="card-title">@eventItem.EventName</h5>
+
+                            <!-- Categories -->
+                            @if (eventItem.Categories != null && eventItem.Categories.Any())
+                            {
+                                <div class="mb-2">
+                                    @foreach (var categoryMapping in eventItem.Categories)
+                                    {
+                                        <span class="badge" style="background-color: @(categoryMapping.Category?.ColorCode ?? "#6c757d")">
+                                            @categoryMapping.Category?.Name
+                                        </span>
+                                    }
+                                </div>
+                            }
+
+                            <p class="card-text text-muted small">
+                                @if (eventItem.EventDescription != null && eventItem.EventDescription.Length > 100)
+                                {
+                                    @eventItem.EventDescription.Substring(0, 100)
+                        
+                                    <text>...</text>
+                                }
+                                else
+                                {
+                                    @eventItem.EventDescription
+                                }
+                            </p>
+
+                            <div class="mb-2">
+                                <small>
+                                    <i class="bi bi-calendar3"></i>
+                                    @eventItem.StartDateTime.ToString("MMM dd, yyyy")
+                                    at @eventItem.StartDateTime.ToString("h:mm tt")
+                                </small>
+                            </div>
+
+                            @if (eventItem.IsVirtual)
+                            {
+                                <div class="mb-2">
+                                    <small><i class="bi bi-laptop"></i> Virtual Event</small>
+                                </div>
+                            }
+                            else if (!string.IsNullOrEmpty(eventItem.City))
+                            {
+                                <div class="mb-2">
+                                    <small><i class="bi bi-geo-alt"></i> @eventItem.City, @eventItem.State</small>
+                                </div>
+                            }
+
+                            @if (eventItem.Attendees != null)
+                            {
+                                <div class="mb-2">
+                                    <small><i class="bi bi-people"></i> @eventItem.Attendees.Count attendee(s)</small>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="card-footer bg-transparent">
+                            <a asp-action="Details" asp-route-id="@eventItem.EventId" class="btn btn-primary btn-sm w-100">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No events found matching your search criteria. Try adjusting your filters.
+        </div>
+    }
+</div>

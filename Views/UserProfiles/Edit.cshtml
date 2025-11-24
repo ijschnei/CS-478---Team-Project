@@ -10,7 +10,7 @@
 
 <form asp-action="Edit" enctype="multipart/form-data" method="post">
     @Html.AntiForgeryToken()
-    <input type="hidden" asp-for="UserProfileId"/>
+    <input type="hidden" asp-for="UserProfileId" />
     <div class="form-group">
         <label for="FirstName">First Name</label>
         <input type="text" asp-for="FirstName" class="form-control" />
@@ -51,7 +51,12 @@
 
     <div class="form-group">
         <label for="Location">Location</label>
-        <input type="text" asp-for="Location" class="form-control" />
+        <div class="input-group">
+            <input type="text" asp-for="Location" class="form-control" id="locationInput" />
+            <button type="button" class="btn btn-outline-secondary" onclick="getMyLocation()">
+                <i class="bi bi-geo-alt-fill"></i> Find My Location
+            </button>
+        </div>
         <span asp-validation-for="Location" class="text-danger"></span>
     </div>
 
@@ -88,6 +93,74 @@
     <a asp-action="Profile" class="btn btn-secondary">Cancel</a>
 </form>
 
-@*section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}*@
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        function getMyLocation() {
+            const locationInput = document.getElementById('locationInput');
+
+            if (!navigator.geolocation) {
+                alert("Geolocation is not supported by your browser.");
+                return;
+            }
+
+            // Show loading state
+            locationInput.value = "Getting location...";
+
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+
+                    // Use OpenStreetMap's Nominatim API for reverse geocoding
+                    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const city = data.address.city || data.address.town || data.address.village || '';
+                            const state = data.address.state || '';
+                            const country = data.address.country || '';
+
+                            // Format: "City, State" or "City, Country" depending on what's available
+                            let location = '';
+                            if (city && state) {
+                                location = `${city}, ${state}`;
+                            } else if (city && country) {
+                                location = `${city}, ${country}`;
+                            } else if (state) {
+                                location = state;
+                            } else {
+                                location = country;
+                            }
+
+                            locationInput.value = location;
+                        })
+                        .catch(error => {
+                            console.error('Error getting location name:', error);
+                            locationInput.value = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+                            alert('Could not get location name, but coordinates were found.');
+                        });
+                },
+                function(error) {
+                    locationInput.value = '';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            alert("Location access denied. Please enable location permissions in your browser.");
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            alert("Location information is unavailable.");
+                            break;
+                        case error.TIMEOUT:
+                            alert("The request to get your location timed out.");
+                            break;
+                        default:
+                            alert("An unknown error occurred.");
+                            break;
+                    }
+                }
+            );
+        }
+    </script>
+}

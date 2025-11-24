@@ -30,11 +30,12 @@
                     <li><a asp-controller="AboutTabs" asp-action="Index">ABOUT US</a></li>
                 </ul>
             </nav>
-            <div class="nav-right">
-                <div class="search">
-                    <input type="text" placeholder="Search...">
-                    <button>Search</button>
-                </div>
+        <div class="search">
+            <form asp-controller="Events" asp-action="Search" method="get" class="d-flex">
+                <input type="text" name="searchTerm" placeholder="Search..." required>
+                <button type="submit">Search</button>
+            </form>
+        </div>
                 @if (User.Identity.IsAuthenticated)
                 {
                     <a asp-controller="UserProfiles" asp-action="Profile" class="account-link">My Profile</a>
