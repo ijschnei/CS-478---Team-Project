@@ -161,20 +161,22 @@ namespace CS478_EventPlannerProject.Data
         }
         private void SeedData(ModelBuilder modelBuilder)
         {
+            //define a static date for seed data
+            var seedDate = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             //seed default event categories
             modelBuilder.Entity<EventCategory>().HasData(
-                new EventCategory { Id = 1, Name = "Business", Description = "Corporate and professional events", ColorCode = "#1f77b4" },
-                new EventCategory { Id = 2, Name = "Social", Description = "Social gatherings and parties", ColorCode = "#ff7f0e" },
-                new EventCategory { Id = 3, Name = "Educational", Description = "Learning and training events", ColorCode = "#2ca02c" },
-                new EventCategory { Id = 4, Name = "Sports", Description = "Athletic and fitness events", ColorCode = "#d62728" },
-                new EventCategory { Id = 5, Name = "Entertainment", Description = "Shows, concerts, and entertainment", ColorCode = "#9467bd" }
+                new EventCategory { Id = 1, Name = "Business", Description = "Corporate and professional events", ColorCode = "#1f77b4", IsActive = true },
+                new EventCategory { Id = 2, Name = "Social", Description = "Social gatherings and parties", ColorCode = "#ff7f0e", IsActive=true },
+                new EventCategory { Id = 3, Name = "Educational", Description = "Learning and training events", ColorCode = "#2ca02c", IsActive=true },
+                new EventCategory { Id = 4, Name = "Sports", Description = "Athletic and fitness events", ColorCode = "#d62728", IsActive=true },
+                new EventCategory { Id = 5, Name = "Entertainment", Description = "Shows, concerts, and entertainment", ColorCode = "#9467bd", IsActive=true }
                 );
 
             //seed default themes
             modelBuilder.Entity<EventTheme>().HasData(
-                new EventTheme { Id = 1, Name = "Classic", Description = "Clean and professional theme", IsActive = true },
-                new EventTheme { Id = 2, Name = "Modern", Description = "Contemporary design with bold colors", IsActive = true },
-                new EventTheme { Id = 3, Name = "Elegant", Description = "Sophisticated and refined styling", IsPremium = true, IsActive = true }
+                new EventTheme { Id = 1, Name = "Classic", Description = "Clean and professional theme", IsActive = true, CreatedAt = seedDate, IsPremium=false },
+                new EventTheme { Id = 2, Name = "Modern", Description = "Contemporary design with bold colors", IsActive = true, CreatedAt=seedDate, IsPremium=false },
+                new EventTheme { Id = 3, Name = "Elegant", Description = "Sophisticated and refined styling", IsPremium = true, IsActive = true, CreatedAt=seedDate }
                 );
         }
 

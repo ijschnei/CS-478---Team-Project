@@ -5,6 +5,39 @@
 
 <h2>Edit Event</h2>
 <link rel="stylesheet" href="~/css/events.css" />
+<style>
+    .css-editor-container {
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 15px;
+        background: white;
+    }
+
+    #customCssEditor {
+        font-family: 'Courier New', Consolas, monospace;
+        font-size: 13px;
+        line-height: 1.5;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        resize: vertical;
+    }
+
+        #customCssEditor:focus {
+            background-color: white;
+            border-color: #86b7fe;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+
+    #cssPreviewContent {
+        background: white;
+        border-radius: 8px;
+    }
+
+    .btn-group-sm .btn-group-sm {
+        font-size: 0.875rem;
+        padding: 0.25rem 0.5rem;
+    }
+</style>
 
 <div class="row">
     <div class="col-md-8">
@@ -216,11 +249,99 @@
                         <small class="form-text text-muted">Select a theme ID (optional)</small>
                     </div>
 
-                    <div class="form-group mt-3">
-                        <label asp-for="CustomCss" class="control-label">Custom CSS</label>
-                        <textarea asp-for="CustomCss" class="form-control" rows="3" placeholder="/* Custom CSS styles */"></textarea>
-                        <span asp-validation-for="CustomCss" class="text-danger"></span>
-                        <small class="form-text text-muted">Add custom CSS for advanced styling (optional)</small>
+                    <!--Enhanced CSS Editor-->
+                    <div class="form-group mt-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label asp-for="CustomCss" class="control-label mb-0">Custom CSS Styles</label>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-secondary" onlick="toggleCssPreview()">
+                                    <i class="fas fa-eye"></i> Toggle Preview
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="formatCss()">
+                                    <i class="fas fa-magic"></i> Format
+                                </button>
+                                <button type="button" class="btn btn-outline-danger" onclick="validateCss()">
+                                    <i class="fas fa-check-circle"></i> Validate
+                                </button>
+                            </div>
+                        </div>
+                        <div class="css-editor-container">
+                            <!--Templates Dropdown-->
+                            <div class="mb-2">
+                                <select class="form-select form-select-sm" id="cssTemplateSelect" onchange="applyCssTemplate(this.value)">
+                                    <option value="">-- Choose a template (optional) --</option>
+                                    <option value="modern">Modern Minimal</option>
+                                    <option value="vibrant">Vibrant Colors</option>
+                                    <option value="elegant">Elegant Dark</option>
+                                    <option value="playful">Playful Fun</option>
+                                </select>
+                            </div>
+                            <!--CSS Editor Textarea-->
+                            <textarea asp-for="CustomCss"
+                                      id="customCssEditor"
+                                      class="form-control font-monospace"
+                                      rows="12"
+                                      placeholder="/* Enter your custom CSS here */
+                                                     /* Available selectors:
+                                                        .event-header { }
+                                                        .event-title { }
+                                                        .event-description { }
+                                                        .event-date { }
+                                                        .event-location { }
+                                                        .btn-rsvp { }
+                                                     */"
+                                      style="font-size: 13px; background-color: #f8f9fa;"></textarea>
+                            <span asp-validation-for="CustomCss" class="text-danger"></span>
+                            <div class="d-flex justify-content-between align-items-center mt-1">
+                                <small class="form-text text-muted">Customize your event page appearance with CSS</small>
+                                <small class="text-muted" id="cssCharCount">0 / 10000 characters</small>
+                            </div>
+                            <!--Validation Alert-->
+                            <div class="alert alert-danger mt-2" id="cssValidationAlert" style="display: none;">
+                                <strong> Validation Error:</strong> <span id="cssValidationMessage"></span>
+                            </div>
+                            <div class="alert alert-success mt-2" id="cssValidationSuccess" style="display: none;">
+                                <strong></strong> CSS looks good! Safe to save.
+                            </div>
+                        </div>
+                        <!--Preview Panel (toggleable)-->
+                        <div class="card mt-3" id="cssPreviewPanel" style="display: none;">
+                            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-desktop"></i> Live Preview</span>
+                                <button type="button" class="btn btn-sm btn-light" onclick="refreshCssPreview()">
+                                    <i class="fas fa-sync-alt"></i> Refresh
+                                </button>
+                            </div>
+                            <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                                <div id="cssPreviewContent">
+                                    <!--Preview content will be injected here-->
+                                    <div class="event-header" style="padding: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; margin-bottom: 20px;">
+                                        <h1 class="event-title" style="color: white; margin-bottom: 10px;">@Model.EventName</h1>
+                                        <p class="event-date" style="color: rgba(255,255,255,0.9);">@Model.StartDateTime.ToString("MMMM dd, yyyy 'at' h:mm tt")</p>
+                                    </div>
+                                    <div style="padding: 20px;">
+                                        <div class="event-description" style="margin-bottom: 20px;">
+                                            <h2 style="color: #2c3e50; margin-bottom: 10px;">About This Event</h2>
+                                            <p style="color: #555;">@(Model.EventDescription ?? "This is a sample event description to show how your custom CSS will look.")</p>
+                                        </div>
+                                        <button class="btn-rsvp" style="background: #3498db; color: white; padding: 10px 25px; border: none; border-radius: 6px;">
+                                            RSVP Now
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!--Help Text-->
+                        <div class="card mt-2" style="background-color: #f8f9fa; border: none;">
+                            <div class="card-body py-2">
+                                <small class="text-muted">
+                                    <strong> Tips:</strong>
+                                    Use templates for inspiration.
+                                    Target classes like <code>.event-header</code>, <code>.event-title</code>, <code>.event-description</code>, etc.
+                                    Avoid using <code>!important</code> unless necessary.
+                                </small>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -333,5 +454,248 @@
                 }
             );
         }
+            }
+        });
+
+        const cssEditor = document.getElementById('customCssEditor');
+        const charCount = document.getElementById('cssCharCount');
+        const previewPanel = document.getElementById('cssPreviewPanel');
+        const previewContent = document.getElementById('cssPreviewContent');
+        const validationAlert = document.getElementById('cssValidationAlert');
+        const validationSuccess = document.getElementById('cssValidationSuccess');
+        const validationMessage = document.getElementById('cssValidationMessage');
+        const MAX_CSS_LENGTH = 10000;
+
+        let previewStyleElement = null;
+        //CSS Templates
+                const cssTemplates = {
+                    modern: `/* Modern Minimal Theme */
+        .event-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            border-radius: 12px !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2) !important;
+        }
+
+        .event-title {
+            font-size: 2.5em !important;
+            font-weight: 700 !important;
+            letter-spacing: -0.5px !important;
+        }
+
+        .event-description, .event-location {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .btn-rsvp {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            transition: all 0.3s ease;
+        }
+
+        .btn-rsvp:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }`,
+
+                    vibrant: `/* Vibrant Colors Theme */
+        .event-header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+            padding: 40px !important;
+        }
+
+        .event-title {
+            font-size: 3em !important;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2) !important;
+        }
+
+        .event-description h2, .event-location h3 {
+            color: #f5576c !important;
+            border-bottom: 3px solid #f093fb;
+            padding-bottom: 10px;
+        }
+
+        .btn-rsvp {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+            font-weight: bold !important;
+            text-transform: uppercase !important;
+        }`,
+
+                    elegant: `/* Elegant Dark Theme */
+        .event-header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important;
+            border-bottom: 3px solid #0f3460 !important;
+        }
+
+        .event-title {
+            font-family: Georgia, serif !important;
+            font-size: 2.8em !important;
+            color: #eee !important;
+        }
+
+        .event-date {
+            color: #94a3b8 !important;
+            font-style: italic !important;
+        }
+
+        .btn-rsvp {
+            background: #0f3460 !important;
+            border: 2px solid #16213e !important;
+        }`,
+
+                    playful: `/* Playful Fun Theme */
+        .event-header {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%) !important;
+            border-radius: 20px !important;
+            border: 5px dashed #ff8c69 !important;
+        }
+
+        .event-title {
+            color: #ff6b6b !important;
+            transform: rotate(-2deg);
+        }
+
+        .event-description, .event-location {
+            background: #fff5e1;
+            border-radius: 15px;
+            padding: 20px;
+            border: 3px solid #ffd93d;
+        }
+
+        .btn-rsvp {
+            background: #ff6b6b !important;
+            border-radius: 25px !important;
+            font-weight: bold !important;
+        }`
+                };
+
+                //update character count on input
+                if (cssEditor){
+                    cssEditor.addEventListener('input', function(){
+                        updateCharCount();
+                        if (previewPanel.style.display !== 'none'){
+                            applyPreviewStyles();
+                        }
+                    });
+                    //initialize character count
+                    updateCharCount();
+                }
+
+                function updateCharCount(){
+                    const length = cssEditor.value.length;
+                    charCount.textContent = `${length} / ${MAX_CSS_LENGTH} characters`;
+                    if (length > MAX_CSS_LENGTH){
+                        charCount.classList.add('text-danger');
+                    } else{
+                        charCount.classList.remove('text-danger');
+                    }
+                }
+                function toggleCssPreview(){
+                    if(previewPanel.style.display === 'none'){
+                        previewPanel.style.display = 'block';
+                    } else{
+                        previewPanel.style.display = 'none';
+                    }
+                }
+                function applyPreviewStyles(){
+                    //remove existing preview style
+                    if(previewStyleElement){
+                        previewStyleElement.remove();
+                    }
+                    //create new style element
+                    previewStyleElement = document.createElement('style');
+                    previewStyleElement.textContent = cssEditor.value;
+                    previewContent.appendChild(previewStyleElement);
+                }
+                function refreshCssPreview(){
+                    applyPreviewStyles();
+                }
+                function formatCss(){
+                    let css = cssEditor.value;
+                    //basic css formatting
+                    css = css.replace(/\s*{\s*/g, ' {\n    ')
+                    css = css.replace(/;\s*/g, ';\n    ');
+                    css = css.replace(/\s*}\s*/g, '\n}\n\n');
+                    css = css.replace(/\n\s*\n\s*\n/g, '\n\n');
+                    css = css.trim();
+
+                    cssEditor.value = css;
+                    updateCharCount();
+
+                    if (previewPanel.style.display !== 'none'){
+                        applyPreviewStyles();
+                    }
+                }
+                function validateCss(){
+                    const css = cssEditor.value;
+                    //hide previous alerts
+                    validationAlert.style.display = 'none';
+                    validationSuccess.style.display = 'none';
+
+                    //check length
+                    if(css.length > MAX_CSS_LENGTH){
+                        showValidationError(`CSS is too long (${css.length} characters). Maximum allowed is ${MAX_CSS_LENGTH}.`);
+                        return false;
+                    }
+                    //check for dangerous patterns
+                     const dangerousPatterns = [
+                        { pattern: /javascript:/gi, name: 'javascript:' },
+                        { pattern: /expression\(/gi, name: 'expression()' },
+                        { pattern: /url\(data:/gi, name: 'data URLs' },
+                        { pattern: /<script/gi, name: '<script>' },
+                        { pattern: /on(click|load|error|mouse)/gi, name: 'inline event handlers' }
+                    ];
+
+                    for (let check of dangerousPatterns) {
+                        if (check.pattern.test(css)) {
+                            showValidationError(`Potentially unsafe content detected: ${check.name}`);
+                            return false;
+                        }
+                    }
+                    //show success
+                    validationSuccess.style.display = 'block';
+                    setTimeout(()=>{
+                        validationSuccess.style.display = 'none';
+                    }, 3000);
+                    return true;
+                }
+                function showValidationError(message){
+                    validationMessage.textContent = message;
+                    validationAlert.style.display = 'block';
+                    //scroll to alert
+                    validationAlert.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+                }
+                function applyCssTemplate(templateName){
+                    if (templateName && cssTemplates[templateName]) {
+                        if (cssEditor.value && !confirm('This will replace your current CSS. Continue?')) {
+                            document.getElementById('cssTemplateSelect').value = '';
+                            return;
+                        }
+
+                        cssEditor.value = cssTemplates[templateName];
+                        updateCharCount();
+
+                        if (previewPanel.style.display !== 'none') {
+                            applyPreviewStyles();
+                        }
+
+                        // Reset dropdown
+                        setTimeout(() => {
+                            document.getElementById('cssTemplateSelect').value = '';
+                        }, 100);
+                    }
+                }
+
+                //validate before form submission
+                document.querySelector('form').addEventListener('submit', function(e) {
+                    if (cssEditor.value.trim()) {
+                        if (!validateCss()) {
+                            e.preventDefault();
+                            alert('Please fix CSS validation errors before saving.');
+                            return false;
+                        }
+                    }
+                });
     </script>
 }
