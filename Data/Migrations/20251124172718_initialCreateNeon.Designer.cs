@@ -12,8 +12,13 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CS478_EventPlannerProject.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
+<<<<<<<< HEAD:Data/Migrations/20251027020741_initialCreate.Designer.cs
+    [Migration("20251027020741_initialCreate")]
+    partial class initialCreate
+========
     [Migration("20251124172718_initialCreateNeon")]
     partial class initialCreateNeon
+>>>>>>>> 78dde66e3d02cef30895658cbaf9d4a876e4a6f8:Data/Migrations/20251124172718_initialCreateNeon.Designer.cs
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
