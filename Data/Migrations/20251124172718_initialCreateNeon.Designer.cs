@@ -12,13 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CS478_EventPlannerProject.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-<<<<<<<< HEAD:Data/Migrations/20251027020741_initialCreate.Designer.cs
-    [Migration("20251027020741_initialCreate")]
-    partial class initialCreate
-========
     [Migration("20251124172718_initialCreateNeon")]
     partial class initialCreateNeon
->>>>>>>> 78dde66e3d02cef30895658cbaf9d4a876e4a6f8:Data/Migrations/20251124172718_initialCreateNeon.Designer.cs
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -211,21 +206,6 @@ namespace CS478_EventPlannerProject.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-<<<<<<<< HEAD:Data/Migrations/20251027020741_initialCreate.Designer.cs
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("MessageId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("ReadAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-========
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
@@ -239,7 +219,6 @@ namespace CS478_EventPlannerProject.Migrations
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("text");
->>>>>>>> 78dde66e3d02cef30895658cbaf9d4a876e4a6f8:Data/Migrations/20251124172718_initialCreateNeon.Designer.cs
 
                     b.HasKey("Id");
 
@@ -255,24 +234,6 @@ namespace CS478_EventPlannerProject.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-<<<<<<<< HEAD:Data/Migrations/20251027020741_initialCreate.Designer.cs
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("EventId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsPinned")
-                        .HasColumnType("bit");
-========
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
@@ -289,25 +250,10 @@ namespace CS478_EventPlannerProject.Migrations
 
                     b.Property<bool>("IsPinned")
                         .HasColumnType("boolean");
->>>>>>>> 78dde66e3d02cef30895658cbaf9d4a876e4a6f8:Data/Migrations/20251124172718_initialCreateNeon.Designer.cs
 
                     b.Property<string>("MessageType")
                         .IsRequired()
                         .HasMaxLength(30)
-<<<<<<<< HEAD:Data/Migrations/20251027020741_initialCreate.Designer.cs
-                        .HasColumnType("nvarchar(30)");
-
-                    b.Property<string>("SenderId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("SentAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Subject")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-========
                         .HasColumnType("character varying(30)");
 
                     b.Property<string>("SenderId")
@@ -320,7 +266,6 @@ namespace CS478_EventPlannerProject.Migrations
                     b.Property<string>("Subject")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
->>>>>>>> 78dde66e3d02cef30895658cbaf9d4a876e4a6f8:Data/Migrations/20251124172718_initialCreateNeon.Designer.cs
 
                     b.HasKey("Id");
 
@@ -374,11 +319,7 @@ namespace CS478_EventPlannerProject.Migrations
                         new
                         {
                             Id = 1,
-<<<<<<<< HEAD:Data/Migrations/20251027020741_initialCreate.Designer.cs
-                            CreatedAt = new DateTime(2025, 10, 27, 2, 7, 39, 977, DateTimeKind.Utc).AddTicks(3770),
-========
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
->>>>>>>> 78dde66e3d02cef30895658cbaf9d4a876e4a6f8:Data/Migrations/20251124172718_initialCreateNeon.Designer.cs
                             Description = "Clean and professional theme",
                             IsActive = true,
                             IsPremium = false,
@@ -387,11 +328,7 @@ namespace CS478_EventPlannerProject.Migrations
                         new
                         {
                             Id = 2,
-<<<<<<<< HEAD:Data/Migrations/20251027020741_initialCreate.Designer.cs
-                            CreatedAt = new DateTime(2025, 10, 27, 2, 7, 39, 977, DateTimeKind.Utc).AddTicks(3776),
-========
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
->>>>>>>> 78dde66e3d02cef30895658cbaf9d4a876e4a6f8:Data/Migrations/20251124172718_initialCreateNeon.Designer.cs
                             Description = "Contemporary design with bold colors",
                             IsActive = true,
                             IsPremium = false,
@@ -400,11 +337,7 @@ namespace CS478_EventPlannerProject.Migrations
                         new
                         {
                             Id = 3,
-<<<<<<<< HEAD:Data/Migrations/20251027020741_initialCreate.Designer.cs
-                            CreatedAt = new DateTime(2025, 10, 27, 2, 7, 39, 977, DateTimeKind.Utc).AddTicks(3777),
-========
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
->>>>>>>> 78dde66e3d02cef30895658cbaf9d4a876e4a6f8:Data/Migrations/20251124172718_initialCreateNeon.Designer.cs
                             Description = "Sophisticated and refined styling",
                             IsActive = true,
                             IsPremium = true,

@@ -3,14 +3,14 @@
 @{
     ViewData["Title"] = "Edit Profile";
 }
-
 <link rel="stylesheet" href="~/css/userprofile.css" />
 
 <h2>Edit Profile</h2>
-
-<form asp-action="Edit" enctype="multipart/form-data" method="post">
+<form asp-action="Edit" enctype="multipart/form-data" method="post" id="profileForm">
     @Html.AntiForgeryToken()
     <input type="hidden" asp-for="UserProfileId" />
+    <input type="hidden" name="SelectedAvatar" id="selectedAvatarInput" value="" />
+
     <div class="form-group">
         <label for="FirstName">First Name</label>
         <input type="text" asp-for="FirstName" class="form-control" />
@@ -36,27 +36,50 @@
     </div>
 
     <div class="form-group">
-        <label for="ProfileImageUrl">Profile Image</label>
-        <input asp-for="ProfileImageFile" type="file" class="form-control" data-val="false" />
-        <span asp-validation-for="ProfileImageFile" class="text-danger"></span>
-        <small class="form-text text-muted">Upload a profile image (JPG, PNG, GIF)</small>
+        <label>Profile Image</label>
+
+        <!-- Current Image Display -->
         @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
         {
-            <div class="mt-2">
-                <img src="@Model.ProfileImageUrl" alt="Current Profile" style="max-width: 150px; max-height: 150px; border-radius: 50%;" />
-                <p class="text-muted">Current profile image</p>
+            <div class="mb-3">
+                <img src="@Model.ProfileImageUrl" alt="Current Profile" id="currentProfileImg" style="max-width: 150px; max-height: 150px; border-radius: 50%; border: 3px solid #ddd;" />
+                <p class="text-muted mb-0">Current profile image</p>
             </div>
         }
+
+        <!-- Avatar Selection Section -->
+        <div class="mb-3">
+            <button type="button" class="btn btn-outline-primary btn-sm" id="showAvatarsBtn">
+                <i class="bi bi-image"></i> Choose from Default Avatars
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="hideAvatarsBtn">
+                <i class="bi bi-x"></i> Hide Avatars
+            </button>
+        </div>
+
+        <div id="avatarGallery" class="mb-3" style="display: none;">
+            <p class="text-muted mb-2">Select a default avatar:</p>
+            <div id="avatarContainer" class="d-flex flex-wrap gap-2">
+                <!-- Avatars will be loaded here dynamically -->
+                <div class="text-center text-muted py-3">
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                    Loading avatars...
+                </div>
+            </div>
+        </div>
+
+        <!-- File Upload Section -->
+        <div class="mb-2">
+            <label class="form-label">Or upload a custom image:</label>
+            <input asp-for="ProfileImageFile" type="file" class="form-control" id="customFileUpload" data-val="false" accept="image/jpeg,image/jpg,image/png,image/gif" />
+            <span asp-validation-for="ProfileImageFile" class="text-danger"></span>
+            <small class="form-text text-muted">Upload a custom image (JPG, PNG, GIF - Max 5MB)</small>
+        </div>
     </div>
 
     <div class="form-group">
         <label for="Location">Location</label>
-        <div class="input-group">
-            <input type="text" asp-for="Location" class="form-control" id="locationInput" />
-            <button type="button" class="btn btn-outline-secondary" onclick="getMyLocation()">
-                <i class="bi bi-geo-alt-fill"></i> Find My Location
-            </button>
-        </div>
+        <input type="text" asp-for="Location" class="form-control" />
         <span asp-validation-for="Location" class="text-danger"></span>
     </div>
 
@@ -93,74 +116,215 @@
     <a asp-action="Profile" class="btn btn-secondary">Cancel</a>
 </form>
 
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+<script>
+    let avatarsLoaded = false;
+    let selectedAvatarPath = '';
+
+    // Show/Hide Avatar Gallery
+    document.getElementById('showAvatarsBtn').addEventListener('click', function() {
+        const gallery = document.getElementById('avatarGallery');
+        gallery.style.display = 'block';
+        this.classList.add('d-none');
+        document.getElementById('hideAvatarsBtn').classList.remove('d-none');
+
+        // Load avatars only once
+        if (!avatarsLoaded) {
+            loadAvatars();
+        }
+    });
+
+    document.getElementById('hideAvatarsBtn').addEventListener('click', function() {
+        document.getElementById('avatarGallery').style.display = 'none';
+        this.classList.add('d-none');
+        document.getElementById('showAvatarsBtn').classList.remove('d-none');
+    });
+
+    // Load available avatars from server
+    function loadAvatars() {
+        fetch('/UserProfiles/GetAvailableAvatars')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load avatars');
+                }
+                return response.json();
+            })
+            .then(avatars => {
+                const container = document.getElementById('avatarContainer');
+
+                if (avatars.length === 0) {
+                    container.innerHTML = '<p class="text-muted">No default avatars available. Please add images to wwwroot/images/avatars/</p>';
+                    avatarsLoaded = true;
+                    return;
+                }
+
+                container.innerHTML = '';
+
+                avatars.forEach(avatarPath => {
+                    const img = document.createElement('img');
+                    img.src = avatarPath;
+                    img.alt = 'Avatar option';
+                    img.className = 'avatar-option';
+                    img.dataset.avatarPath = avatarPath;
+
+                    // Check if this is the current profile image
+                    const currentImg = document.getElementById('currentProfileImg');
+                    if (currentImg && currentImg.src.endsWith(avatarPath)) {
+                        img.classList.add('selected');
+                        selectedAvatarPath = avatarPath;
+                    }
+
+                    img.addEventListener('click', function() {
+                        // Remove selected class from all avatars
+                        document.querySelectorAll('.avatar-option').forEach(av => {
+                            av.classList.remove('selected');
+                        });
+
+                        // Add selected class to clicked avatar
+                        this.classList.add('selected');
+                        selectedAvatarPath = this.dataset.avatarPath;
+
+                        // Update hidden input
+                        document.getElementById('selectedAvatarInput').value = selectedAvatarPath;
+
+                        // Clear file upload if avatar is selected
+                        document.getElementById('customFileUpload').value = '';
+
+                        // Update preview
+                        const currentImg = document.getElementById('currentProfileImg');
+                        if (currentImg) {
+                            currentImg.src = avatarPath;
+                        } else {
+                            // Create preview if it doesn't exist
+                            const previewDiv = document.createElement('div');
+                            previewDiv.className = 'mb-3';
+                            previewDiv.innerHTML = '<img src="' + avatarPath + '" alt="Selected Avatar" id="currentProfileImg" style="max-width: 150px; max-height: 150px; border-radius: 50%; border: 3px solid #ddd;" /><p class="text-muted mb-0">Selected avatar</p>';
+
+                            // Insert after the Profile Image label
+                            const label = document.querySelector('label[for="ProfileImageUrl"]') || document.querySelector('.form-group label');
+                            if (label && label.parentElement) {
+                                label.parentElement.insertBefore(previewDiv, label.nextSibling);
+                            }
+                        }
+                    });
+
+                    container.appendChild(img);
+                });
+
+                avatarsLoaded = true;
+            })
+            .catch(error => {
+                console.error('Error loading avatars:', error);
+                document.getElementById('avatarContainer').innerHTML = '<p class="text-danger">Error loading avatars. Please refresh the page.</p>';
+            });
     }
 
-    <script>
-        function getMyLocation() {
-            const locationInput = document.getElementById('locationInput');
+    // Clear avatar selection if user uploads custom file
+    document.getElementById('customFileUpload').addEventListener('change', function(event) {
+        console.log('=== FILE UPLOAD CHANGE EVENT TRIGGERED ===');
+        console.log('Files selected:', this.files.length);
 
-            if (!navigator.geolocation) {
-                alert("Geolocation is not supported by your browser.");
+        if (this.files.length > 0) {
+            const file = this.files[0];
+            console.log('File details:', {
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                lastModified: new Date(file.lastModified)
+            });
+
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            console.log('Checking file type...');
+            if (!allowedTypes.includes(file.type.toLowerCase())) {
+                console.error('Invalid file type:', file.type);
+                alert('Invalid file type. Please upload a JPEG, PNG, or GIF image.');
+                this.value = '';
                 return;
             }
+            console.log('File type valid ✓');
 
-            // Show loading state
-            locationInput.value = "Getting location...";
+            // Validate file size (5MB max)
+            const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+            console.log('Checking file size...', file.size, 'bytes (max:', maxSize, 'bytes)');
+            if (file.size > maxSize) {
+                console.error('File too large:', file.size);
+                alert('File too large. Please upload an image smaller than 5MB.');
+                this.value = '';
+                return;
+            }
+            console.log('File size valid ✓');
 
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
+            // Clear avatar selection
+            console.log('Clearing avatar selection...');
+            document.getElementById('selectedAvatarInput').value = '';
+            document.querySelectorAll('.avatar-option').forEach(av => {
+                av.classList.remove('selected');
+            });
+            selectedAvatarPath = '';
+            console.log('Avatar selection cleared ✓');
 
-                    // Use OpenStreetMap's Nominatim API for reverse geocoding
-                    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
-                        .then(response => response.json())
-                        .then(data => {
-                            const city = data.address.city || data.address.town || data.address.village || '';
-                            const state = data.address.state || '';
-                            const country = data.address.country || '';
+            // Preview uploaded file
+            if (file.type.startsWith('image/')) {
+                console.log('Starting file read for preview...');
+                const reader = new FileReader();
 
-                            // Format: "City, State" or "City, Country" depending on what's available
-                            let location = '';
-                            if (city && state) {
-                                location = `${city}, ${state}`;
-                            } else if (city && country) {
-                                location = `${city}, ${country}`;
-                            } else if (state) {
-                                location = state;
-                            } else {
-                                location = country;
-                            }
+                reader.onloadstart = function() {
+                    console.log('FileReader started loading...');
+                };
 
-                            locationInput.value = location;
-                        })
-                        .catch(error => {
-                            console.error('Error getting location name:', error);
-                            locationInput.value = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
-                            alert('Could not get location name, but coordinates were found.');
-                        });
-                },
-                function(error) {
-                    locationInput.value = '';
-                    switch(error.code) {
-                        case error.PERMISSION_DENIED:
-                            alert("Location access denied. Please enable location permissions in your browser.");
-                            break;
-                        case error.POSITION_UNAVAILABLE:
-                            alert("Location information is unavailable.");
-                            break;
-                        case error.TIMEOUT:
-                            alert("The request to get your location timed out.");
-                            break;
-                        default:
-                            alert("An unknown error occurred.");
-                            break;
+                reader.onprogress = function(e) {
+                    if (e.lengthComputable) {
+                        const percentLoaded = Math.round((e.loaded / e.total) * 100);
+                        console.log('FileReader progress:', percentLoaded + '%');
                     }
+                };
+
+                reader.onload = function(e) {
+                    console.log('FileReader completed successfully ✓');
+                    const currentImg = document.getElementById('currentProfileImg');
+                    if (currentImg) {
+                        console.log('Updating existing preview image...');
+                        currentImg.src = e.target.result;
+                    } else {
+                        console.log('Creating new preview image...');
+                        // Create preview if it doesn't exist
+                        const previewDiv = document.createElement('div');
+                        previewDiv.className = 'mb-3';
+                        previewDiv.innerHTML = '<img src="' + e.target.result + '" alt="Preview" id="currentProfileImg" style="max-width: 150px; max-height: 150px; border-radius: 50%; border: 3px solid #ddd;" /><p class="text-muted mb-0">Preview of uploaded image</p>';
+
+                        // Insert after the Profile Image label
+                        const uploadSection = document.getElementById('customFileUpload').closest('.mb-2');
+                        if (uploadSection && uploadSection.previousElementSibling) {
+                            uploadSection.parentElement.insertBefore(previewDiv, uploadSection.previousElementSibling.nextSibling);
+                        }
+                    }
+                    console.log('Preview updated ✓');
+                    console.log('=== FILE UPLOAD COMPLETE ===');
+                };
+
+                reader.onerror = function(error) {
+                    console.error('❌ FileReader ERROR:', error);
+                    console.error('Error details:', reader.error);
+                    alert('Failed to read the image file. Please try a different image.');
+                    document.getElementById('customFileUpload').value = '';
+                };
+
+                reader.onabort = function() {
+                    console.error('❌ FileReader ABORTED');
+                };
+
+                console.log('Calling readAsDataURL...');
+                try {
+                    reader.readAsDataURL(file);
+                    console.log('readAsDataURL called successfully');
+                } catch (error) {
+                    console.error('❌ Exception calling readAsDataURL:', error);
                 }
-            );
+            } else {
+                console.warn('File type does not start with "image/":', file.type);
+            }
+        } else {
+            console.log('No files selected');
         }
-    </script>
-}
+    });
+</script>

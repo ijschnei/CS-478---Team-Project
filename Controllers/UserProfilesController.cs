@@ -120,7 +120,7 @@ namespace CS478_EventPlannerProject.Controllers
         // POST: UserProfiles/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(UserProfiles profile)
+        public async Task<IActionResult> Edit(UserProfiles profile, string? SelectedAvatar)
         {
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null)
@@ -129,6 +129,7 @@ namespace CS478_EventPlannerProject.Controllers
             // Remove validation for properties that shouldn't be validated
             ModelState.Remove("User");
             ModelState.Remove("ProfileImageFile");
+            ModelState.Remove("SelectedAvatar");
 
             //ensure the profile belongs to the current user (security check)
             if (profile.UserProfileId != 0)
@@ -144,8 +145,13 @@ namespace CS478_EventPlannerProject.Controllers
             {
                 try
                 {
-                    // Handle file upload
-                    if (profile.ProfileImageFile != null && profile.ProfileImageFile.Length > 0)
+                    // Priority 1: Handle selected avatar (from default avatars)
+                    if (!string.IsNullOrEmpty(SelectedAvatar))
+                    {
+                        profile.ProfileImageUrl = SelectedAvatar;
+                    }
+                    // Priority 2: Handle custom file upload
+                    else if (profile.ProfileImageFile != null && profile.ProfileImageFile.Length > 0)
                     {
                         // Validate file type
                         var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif" };
@@ -176,19 +182,29 @@ namespace CS478_EventPlannerProject.Controllers
                             await profile.ProfileImageFile.CopyToAsync(fileStream);
                         }
 
-                        // Delete old image if exists
-                        if (!string.IsNullOrEmpty(profile.ProfileImageUrl) && profile.ProfileImageUrl.StartsWith("/images/"))
+                        // Delete old image if exists and it's a custom upload (not default avatar)
+                        if (!string.IsNullOrEmpty(profile.ProfileImageUrl) &&
+                            profile.ProfileImageUrl.StartsWith("/images/profiles/"))
                         {
                             var oldImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", profile.ProfileImageUrl.TrimStart('/'));
                             if (System.IO.File.Exists(oldImagePath))
                             {
-                                System.IO.File.Delete(oldImagePath);
+                                try
+                                {
+                                    System.IO.File.Delete(oldImagePath);
+                                }
+                                catch (Exception ex)
+                                {
+                                    // Log but don't fail if we can't delete old image
+                                    System.Diagnostics.Debug.WriteLine($"Could not delete old image: {ex.Message}");
+                                }
                             }
                         }
 
                         // Store the relative path in the database
                         profile.ProfileImageUrl = "/images/profiles/" + uniqueFileName;
                     }
+                    // Priority 3: Keep existing image if no changes
 
                     profile.UserId = currentUser.Id;
                     UserProfiles? updatedProfile;
@@ -213,17 +229,32 @@ namespace CS478_EventPlannerProject.Controllers
                 catch (InvalidOperationException ex)
                 {
                     ModelState.AddModelError("", ex.Message);
+                    System.Diagnostics.Debug.WriteLine($"InvalidOperationException: {ex.Message}");
                 }
                 catch (ArgumentException ex)
                 {
                     ModelState.AddModelError("", ex.Message);
+                    System.Diagnostics.Debug.WriteLine($"ArgumentException: {ex.Message}");
                 }
                 catch (Exception ex)
                 {
                     TempData["Error"] = "An error occurred while updating the profile.";
                     System.Diagnostics.Debug.WriteLine($"Error updating profile: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
                 }
             }
+            else
+            {
+                // Log validation errors for debugging
+                foreach (var modelState in ModelState.Values)
+                {
+                    foreach (var error in modelState.Errors)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Validation error: {error.ErrorMessage}");
+                    }
+                }
+            }
+
             return View(profile);
         }
         // GET: UserProfiles/Delete
@@ -438,6 +469,35 @@ namespace CS478_EventPlannerProject.Controllers
             catch (Exception)
             {
                 return Json(new { success = false });
+            }
+        }
+
+        // GET: UserProfiles/GetAvailableAvatars - Returns list of default avatars
+        [HttpGet]
+        public IActionResult GetAvailableAvatars()
+        {
+            try
+            {
+                var avatarsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "avatars");
+
+                if (!Directory.Exists(avatarsFolder))
+                {
+                    return Json(new List<string>());
+                }
+
+                var avatarFiles = Directory.GetFiles(avatarsFolder)
+                    .Where(f => f.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+                               f.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                               f.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
+                               f.EndsWith(".gif", StringComparison.OrdinalIgnoreCase))
+                    .Select(f => "/images/avatars/" + Path.GetFileName(f))
+                    .ToList();
+
+                return Json(avatarFiles);
+            }
+            catch (Exception)
+            {
+                return Json(new List<string>());
             }
         }
     }
