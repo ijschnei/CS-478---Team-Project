@@ -3,14 +3,14 @@
 @{
     ViewData["Title"] = "Edit Profile";
 }
+
 <link rel="stylesheet" href="~/css/userprofile.css" />
 
 <h2>Edit Profile</h2>
-<form asp-action="Edit" enctype="multipart/form-data" method="post" id="profileForm">
+
+<form asp-action="Edit" enctype="multipart/form-data" method="post">
     @Html.AntiForgeryToken()
     <input type="hidden" asp-for="UserProfileId" />
-    <input type="hidden" name="SelectedAvatar" id="selectedAvatarInput" value="" />
-
     <div class="form-group">
         <label for="FirstName">First Name</label>
         <input type="text" asp-for="FirstName" class="form-control" />
@@ -36,50 +36,27 @@
     </div>
 
     <div class="form-group">
-        <label>Profile Image</label>
-
-        <!-- Current Image Display -->
+        <label for="ProfileImageUrl">Profile Image</label>
+        <input asp-for="ProfileImageFile" type="file" class="form-control" data-val="false" />
+        <span asp-validation-for="ProfileImageFile" class="text-danger"></span>
+        <small class="form-text text-muted">Upload a profile image (JPG, PNG, GIF)</small>
         @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
         {
-            <div class="mb-3">
-                <img src="@Model.ProfileImageUrl" alt="Current Profile" id="currentProfileImg" style="max-width: 150px; max-height: 150px; border-radius: 50%; border: 3px solid #ddd;" />
-                <p class="text-muted mb-0">Current profile image</p>
+            <div class="mt-2">
+                <img src="@Model.ProfileImageUrl" alt="Current Profile" style="max-width: 150px; max-height: 150px; border-radius: 50%;" />
+                <p class="text-muted">Current profile image</p>
             </div>
         }
-
-        <!-- Avatar Selection Section -->
-        <div class="mb-3">
-            <button type="button" class="btn btn-outline-primary btn-sm" id="showAvatarsBtn">
-                <i class="bi bi-image"></i> Choose from Default Avatars
-            </button>
-            <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="hideAvatarsBtn">
-                <i class="bi bi-x"></i> Hide Avatars
-            </button>
-        </div>
-
-        <div id="avatarGallery" class="mb-3" style="display: none;">
-            <p class="text-muted mb-2">Select a default avatar:</p>
-            <div id="avatarContainer" class="d-flex flex-wrap gap-2">
-                <!-- Avatars will be loaded here dynamically -->
-                <div class="text-center text-muted py-3">
-                    <span class="spinner-border spinner-border-sm me-2"></span>
-                    Loading avatars...
-                </div>
-            </div>
-        </div>
-
-        <!-- File Upload Section -->
-        <div class="mb-2">
-            <label class="form-label">Or upload a custom image:</label>
-            <input asp-for="ProfileImageFile" type="file" class="form-control" id="customFileUpload" data-val="false" accept="image/jpeg,image/jpg,image/png,image/gif" />
-            <span asp-validation-for="ProfileImageFile" class="text-danger"></span>
-            <small class="form-text text-muted">Upload a custom image (JPG, PNG, GIF - Max 5MB)</small>
-        </div>
     </div>
 
     <div class="form-group">
         <label for="Location">Location</label>
-        <input type="text" asp-for="Location" class="form-control" />
+        <div class="input-group">
+            <input type="text" asp-for="Location" class="form-control" id="locationInput" />
+            <button type="button" class="btn btn-outline-secondary" onclick="getMyLocation()">
+                <i class="bi bi-geo-alt-fill"></i> Find My Location
+            </button>
+        </div>
         <span asp-validation-for="Location" class="text-danger"></span>
     </div>
 
@@ -173,42 +150,33 @@
                         selectedAvatarPath = avatarPath;
                     }
 
-                    img.addEventListener('click', function() {
-                        // Remove selected class from all avatars
-                        document.querySelectorAll('.avatar-option').forEach(av => {
-                            av.classList.remove('selected');
-                        });
+            // Show loading state
+            locationInput.value = "Getting location...";
 
-                        // Add selected class to clicked avatar
-                        this.classList.add('selected');
-                        selectedAvatarPath = this.dataset.avatarPath;
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
 
-                        // Update hidden input
-                        document.getElementById('selectedAvatarInput').value = selectedAvatarPath;
+                    // Use OpenStreetMap's Nominatim API for reverse geocoding
+                    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const city = data.address.city || data.address.town || data.address.village || '';
+                            const state = data.address.state || '';
+                            const country = data.address.country || '';
 
-                        // Clear file upload if avatar is selected
-                        document.getElementById('customFileUpload').value = '';
-
-                        // Update preview
-                        const currentImg = document.getElementById('currentProfileImg');
-                        if (currentImg) {
-                            currentImg.src = avatarPath;
-                        } else {
-                            // Create preview if it doesn't exist
-                            const previewDiv = document.createElement('div');
-                            previewDiv.className = 'mb-3';
-                            previewDiv.innerHTML = '<img src="' + avatarPath + '" alt="Selected Avatar" id="currentProfileImg" style="max-width: 150px; max-height: 150px; border-radius: 50%; border: 3px solid #ddd;" /><p class="text-muted mb-0">Selected avatar</p>';
-
-                            // Insert after the Profile Image label
-                            const label = document.querySelector('label[for="ProfileImageUrl"]') || document.querySelector('.form-group label');
-                            if (label && label.parentElement) {
-                                label.parentElement.insertBefore(previewDiv, label.nextSibling);
+                            // Format: "City, State" or "City, Country" depending on what's available
+                            let location = '';
+                            if (city && state) {
+                                location = `${city}, ${state}`;
+                            } else if (city && country) {
+                                location = `${city}, ${country}`;
+                            } else if (state) {
+                                location = state;
+                            } else {
+                                location = country;
                             }
-                        }
-                    });
-
-                    container.appendChild(img);
-                });
 
                 avatarsLoaded = true;
             })
@@ -326,5 +294,5 @@
         } else {
             console.log('No files selected');
         }
-    });
-</script>
+    </script>
+}

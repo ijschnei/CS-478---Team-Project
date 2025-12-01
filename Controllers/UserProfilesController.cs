@@ -471,19 +471,7 @@ namespace CS478_EventPlannerProject.Controllers
                 return Json(new { success = false });
             }
         }
-
-        // GET: UserProfiles/GetAvailableAvatars - Returns list of default avatars
-        [HttpGet]
-        public IActionResult GetAvailableAvatars()
-        {
-            try
-            {
-                var avatarsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "avatars");
-
-                if (!Directory.Exists(avatarsFolder))
-                {
-                    return Json(new List<string>());
-                }
+    }
 
                 var avatarFiles = Directory.GetFiles(avatarsFolder)
                     .Where(f => f.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||

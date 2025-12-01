@@ -1,7 +1,6 @@
 ﻿@model CS478_EventPlannerProject.Models.Events
 @{
     ViewData["Title"] = "Edit Event";
-    var venues = ViewBag.Venues as List<CS478_EventPlannerProject.Models.Venue>;
 }
 
 <h2>Edit Event</h2>
@@ -42,7 +41,7 @@
 
 <div class="row">
     <div class="col-md-8">
-        <form asp-action="Edit" method="post" enctype="multipart/form-data" id="eventForm">
+        <form asp-action="Edit" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
             <!-- Hidden fields -->
@@ -132,64 +131,55 @@
                         </label>
                     </div>
 
-                    <!-- Venue Selection -->
-                    <div id="venueSelection" style="display: block;">
-                        @if (!string.IsNullOrEmpty(Model.VenueName) && !Model.IsVirtual)
-                        {
-                            <div class="alert alert-warning">
-                                <strong>Current Venue:</strong> @Model.VenueName<br />
-                                <small>@Model.Address, @Model.City, @Model.State</small><br />
-                                <small class="text-muted">Select a different venue below to change the location</small>
-                            </div>
-                        }
-
-                        <div class="alert alert-info">
-                            <strong>Select a Venue:</strong> Choose from our available venues below
+                    <div id="physicalLocation">
+                        <div class="form-group">
+                            <label asp-for="VenueName" class="control-label">Venue Name</label>
+                            <input asp-for="VenueName" class="form-control" placeholder="Enter venue name" />
+                            <span asp-validation-for="VenueName" class="text-danger"></span>
                         </div>
 
-                        <div class="venue-grid">
-                            @if (venues != null && venues.Any())
-                            {
-                                foreach (var venue in venues)
-                                {
-                                    <div class="venue-card" data-venue-id="@venue.Id">
-                                        <div class="venue-card-header">
-                                            <h6>@venue.Name</h6>
-                                            <small class="text-muted">@venue.Type</small>
-                                        </div>
-                                        <div class="venue-card-body">
-                                            <p><strong>Capacity:</strong> @venue.Capacity people</p>
-                                            <p><strong>Location:</strong> @venue.Address, @venue.City</p>
-                                            <p><strong>Amenities:</strong> @venue.Amenities</p>
-                                            <button type="button" class="btn btn-sm btn-outline-primary select-venue-btn" data-venue-id="@venue.Id">
-                                                Select Venue
-                                            </button>
-                                        </div>
-                                    </div>
-                                }
-                            }
+                        <div class="form-group mt-3">
+                            <label asp-for="Address" class="control-label">Street Address</label>
+                            <div class="input-group">
+                                <input asp-for="Address" class="form-control" id="addressInput" placeholder="Street address" />
+                                <button type="button" class="btn btn-outline-secondary" onclick="getEventLocation()">
+                                    <i class="bi bi-geo-alt-fill"></i> Use My Location
+                                </button>
+                            </div>
+                            <span asp-validation-for="Address" class="text-danger"></span>
                         </div>
 
-                        <!-- Selected Venue Details -->
-                        <div id="selectedVenueDetails" style="display: none;" class="mt-4">
-                            <div class="alert alert-success">
-                                <h6>Selected Venue: <span id="selectedVenueName"></span></h6>
-                                <p id="selectedVenueInfo"></p>
-                                <button type="button" class="btn btn-sm btn-secondary" id="changeVenueBtn">Change Venue</button>
-                            </div>
-
-                            <!-- Time Slot Selection -->
-                            <div class="form-group">
-                                <label class="control-label">Available Time Slots</label>
-                                <div id="timeSlotContainer" class="time-slot-container">
-                                    <!-- Time slots will be loaded here -->
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="City" class="control-label">City</label>
+                                    <input asp-for="City" class="form-control" id="cityInput" />
+                                    <span asp-validation-for="City" class="text-danger"></span>
                                 </div>
-                                <small class="text-muted">Select an available time slot for your event</small>
                             </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label asp-for="State" class="control-label">State</label>
+                                    <input asp-for="State" class="form-control" id="stateInput" placeholder="e.g., CA" />
+                                    <span asp-validation-for="State" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label asp-for="PostalCode" class="control-label">Postal Code</label>
+                                    <input asp-for="PostalCode" class="form-control" id="postalCodeInput" />
+                                    <span asp-validation-for="PostalCode" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <label asp-for="Country" class="control-label">Country</label>
+                            <input asp-for="Country" class="form-control" id="countryInput" placeholder="e.g., United States" />
+                            <span asp-validation-for="Country" class="text-danger"></span>
                         </div>
                     </div>
 
-                    <!-- Virtual Location -->
                     <div id="virtualLocation" style="display: none;">
                         <div class="form-group">
                             <label asp-for="VirtualMeetingUrl" class="control-label">Virtual Meeting URL</label>

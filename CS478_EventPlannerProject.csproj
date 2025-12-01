@@ -27,6 +27,7 @@
   <ItemGroup>
     <Folder Include="Controllers\Api\" />
     <Folder Include="ViewModels\" />
+    <Folder Include="wwwroot\images\" />
     <Folder Include="wwwroot\Uploads\" />
   </ItemGroup>
 

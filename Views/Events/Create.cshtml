@@ -1,7 +1,6 @@
 ﻿@model CS478_EventPlannerProject.Models.Events
 @{
     ViewData["Title"] = "Create Event";
-    var venues = ViewBag.Venues as List<CS478_EventPlannerProject.Models.Venue>;
 }
 
 <link rel="stylesheet" href="~/css/events.css" />
@@ -42,9 +41,10 @@
 
 <h2>Create New Event</h2>
 
+
 <div class="row">
     <div class="col-md-8">
-        <form asp-action="Create" method="post" enctype="multipart/form-data" id="eventForm">
+        <form asp-action="Create" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
             <input type="hidden" name="selectedVenueId" id="selectedVenueId" />
@@ -131,10 +131,11 @@
                         </label>
                     </div>
 
-                    <!-- Venue Selection -->
-                    <div id="venueSelection" style="display: block;">
-                        <div class="alert alert-info">
-                            <strong>Select a Venue:</strong> Choose from our available venues below
+                    <div id="physicalLocation">
+                        <div class="form-group">
+                            <label asp-for="VenueName" class="control-label">Venue Name</label>
+                            <input asp-for="VenueName" class="form-control" placeholder="Enter venue name" />
+                            <span asp-validation-for="VenueName" class="text-danger"></span>
                         </div>
 
                         <div class="venue-grid">
@@ -173,19 +174,22 @@
                                 <p id="selectedVenueInfo"></p>
                                 <button type="button" class="btn btn-sm btn-secondary" id="changeVenueBtn">Change Venue</button>
                             </div>
-
-                            <!-- Time Slot Selection -->
-                            <div class="form-group">
-                                <label class="control-label">Available Time Slots</label>
-                                <div id="timeSlotContainer" class="time-slot-container">
-                                    <!-- Time slots will be loaded here -->
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label asp-for="PostalCode" class="control-label">Postal Code</label>
+                                    <input asp-for="PostalCode" class="form-control" id="postalCodeInput" />
+                                    <span asp-validation-for="PostalCode" class="text-danger"></span>
                                 </div>
-                                <small class="text-muted">Select an available time slot for your event</small>
                             </div>
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <label asp-for="Country" class="control-label">Country</label>
+                            <input asp-for="Country" class="form-control" id="countryInput" placeholder="e.g., United States" />
+                            <span asp-validation-for="Country" class="text-danger"></span>
                         </div>
                     </div>
 
-                    <!-- Virtual Location -->
                     <div id="virtualLocation" style="display: none;">
                         <div class="form-group">
                             <label asp-for="VirtualMeetingUrl" class="control-label">Virtual Meeting URL</label>
@@ -221,6 +225,8 @@
                         <label asp-for="RequiresApproval" class="form-check-label">Require Approval</label>
                         <small class="form-text text-muted d-block">Attendees must be approved before joining</small>
                     </div>
+
+                   <!--Ignore-->
 
                     <div class="form-check mt-3">
                         <input asp-for="AllowGuestList" class="form-check-input" type="checkbox" />
@@ -381,6 +387,7 @@
         </form>
     </div>
 </div>
+
 
 @section Scripts {
     @{
