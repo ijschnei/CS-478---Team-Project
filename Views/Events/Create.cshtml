@@ -351,11 +351,8 @@
 </div>
 
 
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-    <script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
         // Toggle between physical and virtual location fields
         document.getElementById('isVirtualCheck').addEventListener('change', function() {
             if (this.checked) {
@@ -392,14 +389,14 @@
                     fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
                         .then(response => response.json())
                         .then(data => {
-                            console.log('Location data received:', data); // Debug log
+                            console.log('Location data received:', data);
                             const address = data.address;
 
-                            // Fill in address fields with enhanced city detection
+                            // Fill in address fields
                             const street = `${address.house_number || ''} ${address.road || ''}`.trim();
                             addressInput.value = street || '';
 
-                            // Try multiple city fields in order of preference
+                            // Try multiple city fields
                             const city = address.city
                                       || address.town
                                       || address.village
@@ -413,7 +410,6 @@
                             postalCodeInput.value = address.postcode || '';
                             countryInput.value = address.country || '';
 
-                            // If city is still empty, log the full address for debugging
                             if (!city) {
                                 console.warn('Could not determine city. Full address data:', address);
                             }
@@ -443,7 +439,11 @@
                 }
             );
         }
-        });
+
+        // Make getEventLocation available globally for onclick handler
+        window.getEventLocation = getEventLocation;
+    });
+        
 
         const cssEditor = document.getElementById('customCssEditor');
         const charCount = document.getElementById('cssCharCount');
