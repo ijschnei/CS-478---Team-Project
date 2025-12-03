@@ -10,14 +10,21 @@
     var isPending = currentUserAttendee != null && currentUserAttendee.Status == "pending";
     var isTentative = currentUserAttendee != null && currentUserAttendee.Status == "tentative";
 }
-
+@if (!string.IsNullOrEmpty(Model.CustomCss))
+{
+    <style>
+        <!--Users Custom Event CSS-->
+        @Html.Raw(Model.CustomCss)
+    </style>
+}
 <link rel="stylesheet" href="~/css/events.css" />
 
 <div class="container mt-4">
     <div class="row">
         <div class="col-md-8">
             <!-- Event Header -->
-            <div class="card mb-4">
+            <!--Added class="event-header" for CSS targeting-->
+            <div class="card mb-4 event-header">
                 @if (!string.IsNullOrEmpty(Model.BannerImageUrl))
                 {
                     <img src="@Model.BannerImageUrl" class="card-img-top" alt="@Model.EventName" style="max-height: 400px; object-fit:cover;">
@@ -51,7 +58,8 @@
                         }
 
                     </div>
-                    <h1 class="card-title">@Model.EventName</h1>
+                    <!--added class="event-title" for CSS targeting-->
+                    <h1 class="card-title event-title">@Model.EventName</h1>
                     <!--Categories-->
                     @if (Model.Categories.Any())
                     {
@@ -67,14 +75,15 @@
                             }
                         </div>
                     }
+                    <!--added class="event-description" for CSS targeting--> 
                     @if (!string.IsNullOrEmpty(Model.EventDescription))
                     {
-                        <p class="lead">@Model.EventDescription</p>
+                        <p class="lead event-description">@Model.EventDescription</p>
                     }
 
                     @if (!string.IsNullOrEmpty(Model.EventDetails))
                     {
-                        <div class="mt-3">
+                        <div class="mt-3 event-details">
                             <h5>Event Details</h5>
                             <p style="white-space:pre-wrap;">@Model.EventDetails</p>
                         </div>
@@ -112,7 +121,7 @@
                                     {
                                         <form asp-action="Join" asp-route-id="@Model.EventId" method="post" class="d-inline">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-success">
+                                            <button type="submit" class="btn btn-success btn-rsvp">
                                                 <i class="bi bi-calendar-check"></i> @(Model.RequiresApproval ? "Request to Join" : "Join Event")
                                             </button>
                                         </form>
@@ -213,12 +222,9 @@
                         }
                         else
                         {
-                            <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Url.Action("Details", "Events", new{id=Model.EventId})" class="btn btn-primary">
+                            <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Url.Action("Details", "Events", new{id=Model.EventId})" class="btn btn-primary btn-rsvp">
                                 <i class="bi bi-box-arrow-in-right"></i> Login to Join Event
                             </a>
-                            //<a asp-area="Identity" asp-page="/Account/Login" class="btn btn-primary">
-                             //   Login to Join Event
-                            //</a>
                         }
                         <a asp-action="Index" class="btn btn-secondary">
                             <i class="bi bi-arrow-left"></i> Back to Events
@@ -262,7 +268,7 @@
         <!-- Sidebar -->
         <div class="col-md-4">
             <!-- Date & Time Card -->
-            <div class="card mb-3">
+            <div class="card mb-3 event-date">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">
                         <i class="bi bi-calendar-event"></i> Date & Time
@@ -337,7 +343,7 @@
             </div>
 
             <!-- Location Card -->
-            <div class="card mb-3">
+            <div class="card mb-3 event-location">
                 <div class="card-header bg-success text-white">
                     <h5 class="mb-0">
                         <i class="bi bi-geo-alt"></i> Location
@@ -448,7 +454,7 @@
             <!-- Attendees Card (if guest list is allowed) -->
             @if (Model.AllowGuestList)
             {
-                <div class="card mb-3">
+                <div class="card mb-3 attendee-list">
                     <div class="card-header bg-warning">
                         <h5 class="mb-0">
                             <i class="bi bi-people"></i> Attendees
@@ -540,5 +546,7 @@
                 bsAlert.close();
             });
         }, 5000);
+        // Debug: Log if custom CSS was applied
+        console.log('Custom CSS applied:', @Json.Serialize(!string.IsNullOrEmpty(Model.CustomCss)));
     </script>
 }

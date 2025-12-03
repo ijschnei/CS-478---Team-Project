@@ -278,14 +278,15 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Toggle virtual/physical location
-        const virtualCheck = document.getElementById('isVirtualCheck');
-        const physicalDiv = document.getElementById('physicalLocation');
-        const virtualDiv = document.getElementById('virtualLocation');
-
-        virtualCheck.addEventListener('change', () => {
-            physicalDiv.style.display = virtualCheck.checked ? 'none' : 'block';
-            virtualDiv.style.display = virtualCheck.checked ? 'block' : 'none';
+        // Toggle between physical and virtual location fields
+        document.getElementById('isVirtualCheck').addEventListener('change', function() {
+            if (this.checked) {
+                document.getElementById('physicalLocation').style.display = 'none';
+                document.getElementById('virtualLocation').style.display = 'block';
+            } else {
+                document.getElementById('physicalLocation').style.display = 'block';
+                document.getElementById('virtualLocation').style.display = 'none';
+            }
         });
 
         // Geolocation
@@ -299,22 +300,73 @@
             if (!navigator.geolocation) { alert("Geolocation not supported."); return; }
             addr.value = "Getting location...";
 
-            navigator.geolocation.getCurrentPosition(pos => {
-                const lat = pos.coords.latitude, lon = pos.coords.longitude;
-                fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
-                    .then(r => r.json())
-                    .then(data => {
-                        const a = data.address;
-                        addr.value = `${a.house_number || ''} ${a.road || ''}`.trim();
-                        city.value = a.city || a.town || a.village || '';
-                        state.value = a.state || '';
-                        zip.value = a.postcode || '';
-                        country.value = a.country || '';
-                    }).catch(e => { addr.value=''; alert('Failed to get address.'); });
-            }, err => { addr.value=''; alert('Could not get location.'); });
-        };
+            // Show loading state
+            addressInput.value = "Getting location...";
 
-        // CSS Editor
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+
+                    // Use OpenStreetMap's Nominatim API for reverse geocoding
+                    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('Location data received:', data);
+                            const address = data.address;
+
+                            // Fill in address fields
+                            const street = `${address.house_number || ''} ${address.road || ''}`.trim();
+                            addressInput.value = street || '';
+
+                            // Try multiple city fields
+                            const city = address.city
+                                      || address.town
+                                      || address.village
+                                      || address.municipality
+                                      || address.county
+                                      || address.hamlet
+                                      || '';
+
+                            cityInput.value = city;
+                            stateInput.value = address.state || address.region || '';
+                            postalCodeInput.value = address.postcode || '';
+                            countryInput.value = address.country || '';
+
+                            if (!city) {
+                                console.warn('Could not determine city. Full address data:', address);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error getting location details:', error);
+                            addressInput.value = '';
+                            alert('Could not retrieve address details. Please enter manually.');
+                        });
+                },
+                function(error) {
+                    addressInput.value = '';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            alert("Location access denied. Please enable location permissions in your browser.");
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            alert("Location information is unavailable.");
+                            break;
+                        case error.TIMEOUT:
+                            alert("The request to get your location timed out.");
+                            break;
+                        default:
+                            alert("An unknown error occurred.");
+                            break;
+                    }
+                }
+            );
+        }
+
+        // Make getEventLocation available globally for onclick handler
+        window.getEventLocation = getEventLocation;
+    });
+
         const cssEditor = document.getElementById('customCssEditor');
         const previewPanel = document.getElementById('cssPreviewPanel');
         const previewContent = document.getElementById('cssPreviewContent');
