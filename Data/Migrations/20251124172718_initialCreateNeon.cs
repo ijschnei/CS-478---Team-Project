@@ -233,6 +233,7 @@ namespace CS478_EventPlannerProject.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+
             migrationBuilder.CreateTable(
                 name: "Events",
                 columns: table => new
@@ -369,18 +370,6 @@ namespace CS478_EventPlannerProject.Migrations
                 name: "EventGroupMessages",
                 columns: table => new
                 {
-<<<<<<<< HEAD:Data/Migrations/20251027020741_initialCreate.cs
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    EventId = table.Column<int>(type: "int", nullable: false),
-                    SenderId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    MessageType = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
-                    Subject = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    SentAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    IsPinned = table.Column<bool>(type: "bit", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
-========
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     EventId = table.Column<int>(type: "integer", nullable: false),
@@ -391,7 +380,6 @@ namespace CS478_EventPlannerProject.Migrations
                     SentAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IsPinned = table.Column<bool>(type: "boolean", nullable: false),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
->>>>>>>> 78dde66e3d02cef30895658cbaf9d4a876e4a6f8:Data/Migrations/20251124172718_initialCreateNeon.cs
                 },
                 constraints: table =>
                 {
@@ -457,19 +445,11 @@ namespace CS478_EventPlannerProject.Migrations
                 name: "EventGroupMessageReads",
                 columns: table => new
                 {
-<<<<<<<< HEAD:Data/Migrations/20251027020741_initialCreate.cs
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    MessageId = table.Column<int>(type: "int", nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ReadAt = table.Column<DateTime>(type: "datetime2", nullable: false)
-========
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     MessageId = table.Column<int>(type: "integer", nullable: false),
                     UserId = table.Column<string>(type: "text", nullable: false),
                     ReadAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
->>>>>>>> 78dde66e3d02cef30895658cbaf9d4a876e4a6f8:Data/Migrations/20251124172718_initialCreateNeon.cs
                 },
                 constraints: table =>
                 {
@@ -488,6 +468,7 @@ namespace CS478_EventPlannerProject.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            // Seed EventCategories
             migrationBuilder.InsertData(
                 table: "EventCategories",
                 columns: new[] { "Id", "ColorCode", "Description", "IconUrl", "IsActive", "Name" },
@@ -500,22 +481,18 @@ namespace CS478_EventPlannerProject.Migrations
                     { 5, "#9467bd", "Shows, concerts, and entertainment", null, true, "Entertainment" }
                 });
 
+            // Seed EventThemes
             migrationBuilder.InsertData(
                 table: "EventThemes",
                 columns: new[] { "Id", "CreatedAt", "CssTemplate", "Description", "IsActive", "IsPremium", "Name", "ThumbnailUrl" },
                 values: new object[,]
                 {
-<<<<<<<< HEAD:Data/Migrations/20251027020741_initialCreate.cs
-                    { 1, new DateTime(2025, 10, 27, 2, 7, 39, 977, DateTimeKind.Utc).AddTicks(3770), null, "Clean and professional theme", true, false, "Classic", null },
-                    { 2, new DateTime(2025, 10, 27, 2, 7, 39, 977, DateTimeKind.Utc).AddTicks(3776), null, "Contemporary design with bold colors", true, false, "Modern", null },
-                    { 3, new DateTime(2025, 10, 27, 2, 7, 39, 977, DateTimeKind.Utc).AddTicks(3777), null, "Sophisticated and refined styling", true, true, "Elegant", null }
-========
                     { 1, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, "Clean and professional theme", true, false, "Classic", null },
                     { 2, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, "Contemporary design with bold colors", true, false, "Modern", null },
                     { 3, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, "Sophisticated and refined styling", true, true, "Elegant", null }
->>>>>>>> 78dde66e3d02cef30895658cbaf9d4a876e4a6f8:Data/Migrations/20251124172718_initialCreateNeon.cs
                 });
 
+            // Create Indexes
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",

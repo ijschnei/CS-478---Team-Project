@@ -3,6 +3,7 @@ using System;
 using CS478_EventPlannerProject.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CS478_EventPlannerProject.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251203045146_AddVenueIdToEvents")]
+    partial class AddVenueIdToEvents
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -66,7 +69,7 @@ namespace CS478_EventPlannerProject.Migrations
 
                     b.HasIndex("EventId", "Status");
 
-                    b.ToTable("EventAttendees", (string)null);
+                    b.ToTable("EventAttendees");
                 });
 
             modelBuilder.Entity("CS478_EventPlannerProject.Models.EventCategory", b =>
@@ -99,7 +102,7 @@ namespace CS478_EventPlannerProject.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("EventCategories", (string)null);
+                    b.ToTable("EventCategories");
 
                     b.HasData(
                         new
@@ -156,7 +159,7 @@ namespace CS478_EventPlannerProject.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("EventCategoryMappings", (string)null);
+                    b.ToTable("EventCategoryMappings");
                 });
 
             modelBuilder.Entity("CS478_EventPlannerProject.Models.EventCustomFields", b =>
@@ -196,7 +199,7 @@ namespace CS478_EventPlannerProject.Migrations
 
                     b.HasIndex("EventId");
 
-                    b.ToTable("EventCustomFields", (string)null);
+                    b.ToTable("EventCustomFields");
                 });
 
             modelBuilder.Entity("CS478_EventPlannerProject.Models.EventGroupMessageReads", b =>
@@ -224,7 +227,7 @@ namespace CS478_EventPlannerProject.Migrations
                     b.HasIndex("MessageId", "UserId")
                         .IsUnique();
 
-                    b.ToTable("EventGroupMessageReads", (string)null);
+                    b.ToTable("EventGroupMessageReads");
                 });
 
             modelBuilder.Entity("CS478_EventPlannerProject.Models.EventGroupMessages", b =>
@@ -272,7 +275,7 @@ namespace CS478_EventPlannerProject.Migrations
 
                     b.HasIndex("EventId", "SentAt");
 
-                    b.ToTable("EventGroupMessages", (string)null);
+                    b.ToTable("EventGroupMessages");
                 });
 
             modelBuilder.Entity("CS478_EventPlannerProject.Models.EventTheme", b =>
@@ -310,7 +313,7 @@ namespace CS478_EventPlannerProject.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("EventThemes", (string)null);
+                    b.ToTable("EventThemes");
 
                     b.HasData(
                         new
@@ -457,7 +460,7 @@ namespace CS478_EventPlannerProject.Migrations
                     b.HasIndex("VenueTimeSlotId")
                         .IsUnique();
 
-                    b.ToTable("Events", (string)null);
+                    b.ToTable("Events");
                 });
 
             modelBuilder.Entity("CS478_EventPlannerProject.Models.Messages", b =>
@@ -523,7 +526,7 @@ namespace CS478_EventPlannerProject.Migrations
 
                     b.HasIndex("ReceiverId", "IsRead");
 
-                    b.ToTable("Messages", (string)null);
+                    b.ToTable("Messages");
                 });
 
             modelBuilder.Entity("CS478_EventPlannerProject.Models.UserProfiles", b =>
@@ -595,7 +598,7 @@ namespace CS478_EventPlannerProject.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("UserProfiles", (string)null);
+                    b.ToTable("UserProfiles");
                 });
 
             modelBuilder.Entity("CS478_EventPlannerProject.Models.Users", b =>
@@ -727,7 +730,7 @@ namespace CS478_EventPlannerProject.Migrations
 
                     b.HasKey("VenueId");
 
-                    b.ToTable("Venues", (string)null);
+                    b.ToTable("Venues");
 
                     b.HasData(
                         new
@@ -855,7 +858,7 @@ namespace CS478_EventPlannerProject.Migrations
 
                     b.HasIndex("VenueId", "SlotDate", "IsAvailable");
 
-                    b.ToTable("VenueTimeSlots", (string)null);
+                    b.ToTable("VenueTimeSlots");
 
                     b.HasData(
                         new

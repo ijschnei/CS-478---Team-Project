@@ -5,70 +5,29 @@
 
 <h2>Edit Event</h2>
 <link rel="stylesheet" href="~/css/events.css" />
-<style>
-    .css-editor-container {
-        border: 1px solid #dee2e6;
-        border-radius: 6px;
-        padding: 15px;
-        background: white;
-    }
-
-    #customCssEditor {
-        font-family: 'Courier New', Consolas, monospace;
-        font-size: 13px;
-        line-height: 1.5;
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        resize: vertical;
-    }
-
-        #customCssEditor:focus {
-            background-color: white;
-            border-color: #86b7fe;
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-        }
-
-    #cssPreviewContent {
-        background: white;
-        border-radius: 8px;
-    }
-
-    .btn-group-sm .btn-group-sm {
-        font-size: 0.875rem;
-        padding: 0.25rem 0.5rem;
-    }
-</style>
 
 <div class="row">
     <div class="col-md-8">
         <form asp-action="Edit" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-            <!-- Hidden fields -->
             <input type="hidden" asp-for="EventId" />
             <input type="hidden" asp-for="CreatorId" />
-            <input type="hidden" name="selectedVenueId" id="selectedVenueId" />
-            <input type="hidden" name="selectedTimeSlot" id="selectedTimeSlot" />
-            <input type="hidden" name="SelectedBanner" id="selectedBannerInput" value="" />
 
-            <!-- Basic Information Section -->
+            <!-- Event Info Card -->
             <div class="card mb-3">
-                <div class="card-header">
-                    <h5>Event Information</h5>
-                </div>
+                <div class="card-header"><h5>Event Information</h5></div>
                 <div class="card-body">
                     <div class="form-group">
                         <label asp-for="EventName" class="control-label">Event Name *</label>
                         <input asp-for="EventName" class="form-control" placeholder="Enter event name" />
                         <span asp-validation-for="EventName" class="text-danger"></span>
                     </div>
-
                     <div class="form-group mt-3">
                         <label asp-for="EventDescription" class="control-label">Description</label>
                         <textarea asp-for="EventDescription" class="form-control" rows="3" placeholder="Describe your event"></textarea>
                         <span asp-validation-for="EventDescription" class="text-danger"></span>
                     </div>
-
                     <div class="form-group mt-3">
                         <label asp-for="EventDetails" class="control-label">Additional Details</label>
                         <textarea asp-for="EventDetails" class="form-control" rows="2" placeholder="Any additional information"></textarea>
@@ -77,58 +36,43 @@
                 </div>
             </div>
 
-            <!-- Date and Time Section -->
+            <!-- Date & Time Card -->
             <div class="card mb-3">
-                <div class="card-header">
-                    <h5>Date & Time</h5>
-                </div>
+                <div class="card-header"><h5>Date & Time</h5></div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label asp-for="StartDateTime" class="control-label">Start Date & Time *</label>
-                                <input asp-for="StartDateTime" type="datetime-local" class="form-control" />
-                                <span asp-validation-for="StartDateTime" class="text-danger"></span>
-                            </div>
+                            <label asp-for="StartDateTime" class="control-label">Start Date & Time *</label>
+                            <input asp-for="StartDateTime" type="datetime-local" class="form-control" />
+                            <span asp-validation-for="StartDateTime" class="text-danger"></span>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label asp-for="EndDateTime" class="control-label">End Date & Time *</label>
-                                <input asp-for="EndDateTime" type="datetime-local" class="form-control" />
-                                <span asp-validation-for="EndDateTime" class="text-danger"></span>
-                            </div>
+                            <label asp-for="EndDateTime" class="control-label">End Date & Time *</label>
+                            <input asp-for="EndDateTime" type="datetime-local" class="form-control" />
+                            <span asp-validation-for="EndDateTime" class="text-danger"></span>
                         </div>
                     </div>
-
                     <div class="row mt-3">
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label asp-for="TimeZone" class="control-label">Time Zone</label>
-                                <input asp-for="TimeZone" class="form-control" placeholder="e.g., EST, PST, UTC" />
-                                <span asp-validation-for="TimeZone" class="text-danger"></span>
-                            </div>
+                            <label asp-for="TimeZone" class="control-label">Time Zone</label>
+                            <input asp-for="TimeZone" class="form-control" placeholder="e.g., EST, PST, UTC" />
+                            <span asp-validation-for="TimeZone" class="text-danger"></span>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-check mt-4">
-                                <input asp-for="IsAllDay" class="form-check-input" type="checkbox" />
-                                <label asp-for="IsAllDay" class="form-check-label">All Day Event</label>
-                            </div>
+                        <div class="col-md-6 form-check mt-4">
+                            <input asp-for="IsAllDay" class="form-check-input" type="checkbox" />
+                            <label asp-for="IsAllDay" class="form-check-label">All Day Event</label>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Location Section with Venue Selection -->
+            <!-- Location Card -->
             <div class="card mb-3">
-                <div class="card-header">
-                    <h5>Location</h5>
-                </div>
+                <div class="card-header"><h5>Location</h5></div>
                 <div class="card-body">
                     <div class="form-check mb-3">
                         <input asp-for="IsVirtual" class="form-check-input" type="checkbox" id="isVirtualCheck" />
-                        <label asp-for="IsVirtual" class="form-check-label" for="isVirtualCheck">
-                            This is a virtual event
-                        </label>
+                        <label asp-for="IsVirtual" class="form-check-label" for="isVirtualCheck">This is a virtual event</label>
                     </div>
 
                     <div id="physicalLocation">
@@ -150,42 +94,17 @@
                         </div>
 
                         <div class="row mt-3">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label asp-for="City" class="control-label">City</label>
-                                    <input asp-for="City" class="form-control" id="cityInput" />
-                                    <span asp-validation-for="City" class="text-danger"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label asp-for="State" class="control-label">State</label>
-                                    <input asp-for="State" class="form-control" id="stateInput" placeholder="e.g., CA" />
-                                    <span asp-validation-for="State" class="text-danger"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label asp-for="PostalCode" class="control-label">Postal Code</label>
-                                    <input asp-for="PostalCode" class="form-control" id="postalCodeInput" />
-                                    <span asp-validation-for="PostalCode" class="text-danger"></span>
-                                </div>
-                            </div>
+                            <div class="col-md-6"><input asp-for="City" class="form-control" id="cityInput" /></div>
+                            <div class="col-md-3"><input asp-for="State" class="form-control" id="stateInput" placeholder="e.g., CA" /></div>
+                            <div class="col-md-3"><input asp-for="PostalCode" class="form-control" id="postalCodeInput" /></div>
                         </div>
-
-                        <div class="form-group mt-3">
-                            <label asp-for="Country" class="control-label">Country</label>
-                            <input asp-for="Country" class="form-control" id="countryInput" placeholder="e.g., United States" />
-                            <span asp-validation-for="Country" class="text-danger"></span>
-                        </div>
+                        <div class="form-group mt-3"><input asp-for="Country" class="form-control" id="countryInput" placeholder="e.g., United States" /></div>
                     </div>
 
                     <div id="virtualLocation" style="display: none;">
                         <div class="form-group">
                             <label asp-for="VirtualMeetingUrl" class="control-label">Virtual Meeting URL</label>
                             <input asp-for="VirtualMeetingUrl" type="url" class="form-control" placeholder="https://zoom.us/j/123456789" />
-                            <span asp-validation-for="VirtualMeetingUrl" class="text-danger"></span>
-                            <small class="form-text text-muted">Enter the link to your Zoom, Teams, or other virtual meeting</small>
                         </div>
                     </div>
                 </div>
@@ -224,52 +143,25 @@
                 </div>
             </div>
 
-            <!-- Appearance Section with Banner Selection -->
+            <!-- Appearance Section -->
             <div class="card mb-3">
                 <div class="card-header">
                     <h5>Appearance</h5>
                 </div>
                 <div class="card-body">
                     <div class="form-group">
-                        <label class="control-label">Banner Image</label>
+                        <label asp-for="BannerImageFile" class="control-label">Banner Image</label>
+                        <input asp-for="BannerImageFile" type="file" class="form-control" accept="image/*" data-val="false" />
+                        <span asp-validation-for="BannerImageFile" class="text-danger"></span>
+                        <small class="form-text text-muted">Upload an image for your event banner (JPG, PNG, GIF)</small>
 
-                        <!-- Current Banner Display -->
                         @if (!string.IsNullOrEmpty(Model.BannerImageUrl))
                         {
-                            <div class="mb-3">
-                                <img src="@Model.BannerImageUrl" alt="Current Banner" id="currentBannerImg" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 3px solid #ddd;" />
-                                <p class="text-muted mb-0">Current banner image</p>
+                            <div class="mt-2">
+                                <img src="@Model.BannerImageUrl" alt="Current Banner" style="max-width: 200px; max-height: 150px; border-radius: 8px;" />
+                                <p class="text-muted">Current banner image</p>
                             </div>
                         }
-
-                        <!-- Banner Selection Section -->
-                        <div class="mb-3">
-                            <button type="button" class="btn btn-outline-primary btn-sm" id="showBannersBtn">
-                                <i class="bi bi-images"></i> Choose from Default Banners
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="hideBannersBtn">
-                                <i class="bi bi-x"></i> Hide Banners
-                            </button>
-                        </div>
-
-                        <div id="bannerGallery" class="mb-3" style="display: none;">
-                            <p class="text-muted mb-2">Select a default banner:</p>
-                            <div id="bannerContainer">
-                                <!-- Banners will be loaded here dynamically -->
-                                <div class="text-center text-muted py-3">
-                                    <span class="spinner-border spinner-border-sm me-2"></span>
-                                    Loading banners...
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- File Upload Section -->
-                        <div class="mb-2">
-                            <label class="form-label">Or upload a custom banner:</label>
-                            <input asp-for="BannerImageFile" type="file" class="form-control" id="customBannerUpload" accept="image/*" data-val="false" />
-                            <span asp-validation-for="BannerImageFile" class="text-danger"></span>
-                            <small class="form-text text-muted">Upload a custom banner image (JPG, PNG, GIF - Recommended: 1200x400px)</small>
-                        </div>
                     </div>
 
                     <div class="form-group mt-3">
@@ -284,7 +176,7 @@
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <label asp-for="CustomCss" class="control-label mb-0">Custom CSS Styles</label>
                             <div class="btn-group btn-group-sm" role="group">
-                                <button type="button" class="btn btn-outline-secondary" onclick="toggleCssPreview()">
+                                <button type="button" class="btn btn-outline-secondary" onlick="toggleCssPreview()">
                                     <i class="fas fa-eye"></i> Toggle Preview
                                 </button>
                                 <button type="button" class="btn btn-outline-secondary" onclick="formatCss()">
@@ -312,14 +204,14 @@
                                       class="form-control font-monospace"
                                       rows="12"
                                       placeholder="/* Enter your custom CSS here */
-/* Available selectors:
-   .event-header { }
-   .event-title { }
-   .event-description { }
-   .event-date { }
-   .event-location { }
-   .btn-rsvp { }
-*/"
+                                                     /* Available selectors:
+                                                        .event-header { }
+                                                        .event-title { }
+                                                        .event-description { }
+                                                        .event-date { }
+                                                        .event-location { }
+                                                        .btn-rsvp { }
+                                                     */"
                                       style="font-size: 13px; background-color: #f8f9fa;"></textarea>
                             <span asp-validation-for="CustomCss" class="text-danger"></span>
                             <div class="d-flex justify-content-between align-items-center mt-1">
@@ -328,10 +220,10 @@
                             </div>
                             <!--Validation Alert-->
                             <div class="alert alert-danger mt-2" id="cssValidationAlert" style="display: none;">
-                                <strong>Validation Error:</strong> <span id="cssValidationMessage"></span>
+                                <strong> Validation Error:</strong> <span id="cssValidationMessage"></span>
                             </div>
                             <div class="alert alert-success mt-2" id="cssValidationSuccess" style="display: none;">
-                                <strong>✓</strong> CSS looks good! Safe to save.
+                                <strong></strong> CSS looks good! Safe to save.
                             </div>
                         </div>
                         <!--Preview Panel (toggleable)-->
@@ -365,7 +257,7 @@
                         <div class="card mt-2" style="background-color: #f8f9fa; border: none;">
                             <div class="card-body py-2">
                                 <small class="text-muted">
-                                    <strong>💡 Tips:</strong>
+                                    <strong> Tips:</strong>
                                     Use templates for inspiration.
                                     Target classes like <code>.event-header</code>, <code>.event-title</code>, <code>.event-description</code>, etc.
                                     Avoid using <code>!important</code> unless necessary.
@@ -376,7 +268,6 @@
                 </div>
             </div>
 
-            <!-- Submit Buttons -->
             <div class="form-group">
                 <button type="submit" class="btn btn-primary">Save Changes</button>
                 <a asp-action="Details" asp-route-id="@Model.EventId" class="btn btn-secondary">Cancel</a>
@@ -385,254 +276,73 @@
     </div>
 </div>
 
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-    <script src="~/js/venue-selection.js"></script>
-    <script src="~/js/banner-selection.js"></script>
-    <script>
-                // CSS Editor functionality
-                const cssEditor = document.getElementById('customCssEditor');
-                const charCount = document.getElementById('cssCharCount');
-                const previewPanel = document.getElementById('cssPreviewPanel');
-                const previewContent = document.getElementById('cssPreviewContent');
-                const validationAlert = document.getElementById('cssValidationAlert');
-                const validationSuccess = document.getElementById('cssValidationSuccess');
-                const validationMessage = document.getElementById('cssValidationMessage');
-                const MAX_CSS_LENGTH = 10000;
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle virtual/physical location
+        const virtualCheck = document.getElementById('isVirtualCheck');
+        const physicalDiv = document.getElementById('physicalLocation');
+        const virtualDiv = document.getElementById('virtualLocation');
 
-                let previewStyleElement = null;
+        virtualCheck.addEventListener('change', () => {
+            physicalDiv.style.display = virtualCheck.checked ? 'none' : 'block';
+            virtualDiv.style.display = virtualCheck.checked ? 'block' : 'none';
+        });
 
-                // CSS Templates
-                const cssTemplates = {
-                    modern: `/* Modern Minimal Theme */
-        .event-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-            border-radius: 12px !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2) !important;
+        // Geolocation
+        window.getEventLocation = function() {
+            const addr = document.getElementById('addressInput');
+            const city = document.getElementById('cityInput');
+            const state = document.getElementById('stateInput');
+            const zip = document.getElementById('postalCodeInput');
+            const country = document.getElementById('countryInput');
+
+            if (!navigator.geolocation) { alert("Geolocation not supported."); return; }
+            addr.value = "Getting location...";
+
+            navigator.geolocation.getCurrentPosition(pos => {
+                const lat = pos.coords.latitude, lon = pos.coords.longitude;
+                fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+                    .then(r => r.json())
+                    .then(data => {
+                        const a = data.address;
+                        addr.value = `${a.house_number || ''} ${a.road || ''}`.trim();
+                        city.value = a.city || a.town || a.village || '';
+                        state.value = a.state || '';
+                        zip.value = a.postcode || '';
+                        country.value = a.country || '';
+                    }).catch(e => { addr.value=''; alert('Failed to get address.'); });
+            }, err => { addr.value=''; alert('Could not get location.'); });
+        };
+
+        // CSS Editor
+        const cssEditor = document.getElementById('customCssEditor');
+        const previewPanel = document.getElementById('cssPreviewPanel');
+        const previewContent = document.getElementById('cssPreviewContent');
+        const MAX_CSS_LENGTH = 10000;
+        let previewStyleElement = null;
+
+        function applyPreview() {
+            if(previewStyleElement) previewStyleElement.remove();
+            previewStyleElement = document.createElement('style');
+            previewStyleElement.textContent = cssEditor.value;
+            previewContent.appendChild(previewStyleElement);
         }
 
-        .event-title {
-            font-size: 2.5em !important;
-            font-weight: 700 !important;
-            letter-spacing: -0.5px !important;
+        function validateCss() {
+            const css = cssEditor.value;
+            const invalid = [/javascript:/i,/expression\(/i,/url\(data:/i,/<script/i,/on(click|load|error|mouse)/i];
+            for(const p of invalid) if(p.test(css)) { alert('Unsafe CSS detected'); return false; }
+            if(css.length>MAX_CSS_LENGTH){ alert('CSS too long'); return false; }
+            return true;
         }
 
-        .event-description, .event-location {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
-        }
+        if(cssEditor) cssEditor.addEventListener('input', applyPreview);
 
-        .btn-rsvp {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-            transition: all 0.3s ease;
-        }
-
-        .btn-rsvp:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-        }`,
-
-                    vibrant: `/* Vibrant Colors Theme */
-        .event-header {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
-            padding: 40px !important;
-        }
-
-        .event-title {
-            font-size: 3em !important;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2) !important;
-        }
-
-        .event-description h2, .event-location h3 {
-            color: #f5576c !important;
-            border-bottom: 3px solid #f093fb;
-            padding-bottom: 10px;
-        }
-
-        .btn-rsvp {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
-            font-weight: bold !important;
-            text-transform: uppercase !important;
-        }`,
-
-                    elegant: `/* Elegant Dark Theme */
-        .event-header {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important;
-            border-bottom: 3px solid #0f3460 !important;
-        }
-
-        .event-title {
-            font-family: Georgia, serif !important;
-            font-size: 2.8em !important;
-            color: #eee !important;
-        }
-
-        .event-date {
-            color: #94a3b8 !important;
-            font-style: italic !important;
-        }
-
-        .btn-rsvp {
-            background: #0f3460 !important;
-            border: 2px solid #16213e !important;
-        }`,
-
-                    playful: `/* Playful Fun Theme */
-        .event-header {
-            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%) !important;
-            border-radius: 20px !important;
-            border: 5px dashed #ff8c69 !important;
-        }
-
-        .event-title {
-            color: #ff6b6b !important;
-            transform: rotate(-2deg);
-        }
-
-        .event-description, .event-location {
-            background: #fff5e1;
-            border-radius: 15px;
-            padding: 20px;
-            border: 3px solid #ffd93d;
-        }
-
-        .btn-rsvp {
-            background: #ff6b6b !important;
-            border-radius: 25px !important;
-            font-weight: bold !important;
-        }`
-                };
-
-                // Update character count on input
-                if (cssEditor) {
-                    cssEditor.addEventListener('input', function(){
-                        updateCharCount();
-                        if (previewPanel.style.display !== 'none'){
-                            applyPreviewStyles();
-                        }
-                    });
-                    updateCharCount();
-                }
-
-                function updateCharCount(){
-                    const length = cssEditor.value.length;
-                    charCount.textContent = `${length} / ${MAX_CSS_LENGTH} characters`;
-                    if (length > MAX_CSS_LENGTH){
-                        charCount.classList.add('text-danger');
-                    } else{
-                        charCount.classList.remove('text-danger');
-                    }
-                }
-
-                function toggleCssPreview(){
-                    if(previewPanel.style.display === 'none'){
-                        previewPanel.style.display = 'block';
-                        applyPreviewStyles();
-                    } else{
-                        previewPanel.style.display = 'none';
-                    }
-                }
-
-                function applyPreviewStyles(){
-                    if(previewStyleElement){
-                        previewStyleElement.remove();
-                    }
-                    previewStyleElement = document.createElement('style');
-                    previewStyleElement.textContent = cssEditor.value;
-                    previewContent.appendChild(previewStyleElement);
-                }
-
-                function refreshCssPreview(){
-                    applyPreviewStyles();
-                }
-
-                function formatCss(){
-                    let css = cssEditor.value;
-                    css = css.replace(/\s*{\s*/g, ' {\n    ');
-                    css = css.replace(/;\s*/g, ';\n    ');
-                    css = css.replace(/\s*}\s*/g, '\n}\n\n');
-                    css = css.replace(/\n\s*\n\s*\n/g, '\n\n');
-                    css = css.trim();
-
-                    cssEditor.value = css;
-                    updateCharCount();
-
-                    if (previewPanel.style.display !== 'none'){
-                        applyPreviewStyles();
-                    }
-                }
-
-                function validateCss(){
-                    const css = cssEditor.value;
-                    validationAlert.style.display = 'none';
-                    validationSuccess.style.display = 'none';
-
-                    if(css.length > MAX_CSS_LENGTH){
-                        showValidationError(`CSS is too long (${css.length} characters). Maximum allowed is ${MAX_CSS_LENGTH}.`);
-                        return false;
-                    }
-
-                    const dangerousPatterns = [
-                        { pattern: /javascript:/gi, name: 'javascript:' },
-                        { pattern: /expression\(/gi, name: 'expression()' },
-                        { pattern: /url\(data:/gi, name: 'data URLs' },
-                        { pattern: /<script/gi, name: '<script>' },
-                        { pattern: /on(click|load|error|mouse)/gi, name: 'inline event handlers' }
-                    ];
-
-                    for (let check of dangerousPatterns) {
-                        if (check.pattern.test(css)) {
-                            showValidationError(`Potentially unsafe content detected: ${check.name}`);
-                            return false;
-                        }
-                    }
-
-                    validationSuccess.style.display = 'block';
-                    setTimeout(()=>{
-                        validationSuccess.style.display = 'none';
-                    }, 3000);
-                    return true;
-                }
-
-                function showValidationError(message){
-                    validationMessage.textContent = message;
-                    validationAlert.style.display = 'block';
-                    validationAlert.scrollIntoView({behavior: 'smooth', block: 'nearest'});
-                }
-
-                function applyCssTemplate(templateName){
-                    if (templateName && cssTemplates[templateName]) {
-                        if (cssEditor.value && !confirm('This will replace your current CSS. Continue?')) {
-                            document.getElementById('cssTemplateSelect').value = '';
-                            return;
-                        }
-
-                        cssEditor.value = cssTemplates[templateName];
-                        updateCharCount();
-
-                        if (previewPanel.style.display !== 'none') {
-                            applyPreviewStyles();
-                        }
-
-                        setTimeout(() => {
-                            document.getElementById('cssTemplateSelect').value = '';
-                        }, 100);
-                    }
-                }
-
-                // Validate before form submission
-                document.querySelector('form').addEventListener('submit', function(e) {
-                    if (cssEditor.value.trim()) {
-                        if (!validateCss()) {
-                            e.preventDefault();
-                            alert('Please fix CSS validation errors before saving.');
-                            return false;
-                        }
-                    }
-                });
-    </script>
-}
+        // Form submission
+        document.querySelector('form').addEventListener('submit', function(e){
+            if(cssEditor && cssEditor.value.trim() && !validateCss()){
+                e.preventDefault();
+            }
+        });
+    });
+</script>

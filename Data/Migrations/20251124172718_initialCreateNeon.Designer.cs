@@ -12,13 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CS478_EventPlannerProject.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-<<<<<<<< HEAD:Data/Migrations/20251027020741_initialCreate.Designer.cs
-    [Migration("20251027020741_initialCreate")]
-    partial class initialCreate
-========
     [Migration("20251124172718_initialCreateNeon")]
     partial class initialCreateNeon
->>>>>>>> 78dde66e3d02cef30895658cbaf9d4a876e4a6f8:Data/Migrations/20251124172718_initialCreateNeon.Designer.cs
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -31,126 +26,88 @@ namespace CS478_EventPlannerProject.Migrations
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("CS478_EventPlannerProject.Models.EventAttendees", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AttendeeType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                b.Property<string>("AttendeeType")
+                    .IsRequired()
+                    .HasMaxLength(20)
+                    .HasColumnType("character varying(20)");
 
-                    b.Property<DateTime?>("CheckInTime")
-                        .HasColumnType("timestamp with time zone");
+                b.Property<DateTime?>("CheckInTime")
+                    .HasColumnType("timestamp with time zone");
 
-                    b.Property<bool>("CheckedIn")
-                        .HasColumnType("boolean");
+                b.Property<bool>("CheckedIn")
+                    .HasColumnType("boolean");
 
-                    b.Property<int>("EventId")
-                        .HasColumnType("integer");
+                b.Property<int>("EventId")
+                    .HasColumnType("integer");
 
-                    b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                b.Property<string>("Notes")
+                    .HasMaxLength(500)
+                    .HasColumnType("character varying(500)");
 
-                    b.Property<DateTime>("RSVP_Date")
-                        .HasColumnType("timestamp with time zone");
+                b.Property<DateTime>("RSVP_Date")
+                    .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                b.Property<string>("Status")
+                    .IsRequired()
+                    .HasMaxLength(20)
+                    .HasColumnType("character varying(20)");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("text");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("EventId", "Status");
-
-                    b.ToTable("EventAttendees");
-                });
+                b.HasKey("Id");
+                b.HasIndex("UserId");
+                b.HasIndex("EventId", "Status");
+                b.ToTable("EventAttendees");
+            });
 
             modelBuilder.Entity("CS478_EventPlannerProject.Models.EventCategory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ColorCode")
-                        .HasMaxLength(7)
-                        .HasColumnType("character varying(7)");
+                b.Property<string>("ColorCode")
+                    .HasMaxLength(7)
+                    .HasColumnType("character varying(7)");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                b.Property<string>("Description")
+                    .HasMaxLength(500)
+                    .HasColumnType("character varying(500)");
 
-                    b.Property<string>("IconUrl")
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
+                b.Property<string>("IconUrl")
+                    .HasMaxLength(300)
+                    .HasColumnType("character varying(300)");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
+                b.Property<bool>("IsActive")
+                    .HasColumnType("boolean");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
+                b.ToTable("EventCategories");
 
-                    b.ToTable("EventCategories");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            ColorCode = "#1f77b4",
-                            Description = "Corporate and professional events",
-                            IsActive = true,
-                            Name = "Business"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            ColorCode = "#ff7f0e",
-                            Description = "Social gatherings and parties",
-                            IsActive = true,
-                            Name = "Social"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            ColorCode = "#2ca02c",
-                            Description = "Learning and training events",
-                            IsActive = true,
-                            Name = "Educational"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            ColorCode = "#d62728",
-                            Description = "Athletic and fitness events",
-                            IsActive = true,
-                            Name = "Sports"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            ColorCode = "#9467bd",
-                            Description = "Shows, concerts, and entertainment",
-                            IsActive = true,
-                            Name = "Entertainment"
-                        });
-                });
+                b.HasData(
+                    new { Id = 1, ColorCode = "#1f77b4", Description = "Corporate and professional events", IsActive = true, Name = "Business" },
+                    new { Id = 2, ColorCode = "#ff7f0e", Description = "Social gatherings and parties", IsActive = true, Name = "Social" },
+                    new { Id = 3, ColorCode = "#2ca02c", Description = "Learning and training events", IsActive = true, Name = "Educational" },
+                    new { Id = 4, ColorCode = "#d62728", Description = "Athletic and fitness events", IsActive = true, Name = "Sports" },
+                    new { Id = 5, ColorCode = "#9467bd", Description = "Shows, concerts, and entertainment", IsActive = true, Name = "Entertainment" }
+                );
+            });
 
             modelBuilder.Entity("CS478_EventPlannerProject.Models.EventCategoryMapping", b =>
                 {

@@ -11,6 +11,8 @@
 <form asp-action="Edit" enctype="multipart/form-data" method="post">
     @Html.AntiForgeryToken()
     <input type="hidden" asp-for="UserProfileId" />
+    <input type="hidden" name="SelectedAvatar" id="selectedAvatarInput" value="" />
+
     <div class="form-group">
         <label for="FirstName">First Name</label>
         <input type="text" asp-for="FirstName" class="form-control" />
@@ -35,18 +37,45 @@
         <span asp-validation-for="Bio" class="text-danger"></span>
     </div>
 
+    <!-- Profile Image Section -->
     <div class="form-group">
         <label for="ProfileImageUrl">Profile Image</label>
-        <input asp-for="ProfileImageFile" type="file" class="form-control" data-val="false" />
-        <span asp-validation-for="ProfileImageFile" class="text-danger"></span>
-        <small class="form-text text-muted">Upload a profile image (JPG, PNG, GIF)</small>
+
+        <!-- Current Image Preview -->
         @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
         {
-            <div class="mt-2">
-                <img src="@Model.ProfileImageUrl" alt="Current Profile" style="max-width: 150px; max-height: 150px; border-radius: 50%;" />
-                <p class="text-muted">Current profile image</p>
+            <div class="mb-3" id="currentProfileImgContainer">
+                <img src="@Model.ProfileImageUrl" alt="Current Profile" id="currentProfileImg" style="max-width: 150px; max-height: 150px; border-radius: 50%; border: 3px solid #ddd;" />
+                <p class="text-muted mb-0">Current profile image</p>
             </div>
         }
+
+        <!-- Avatar Selection Section -->
+        <div class="mb-3">
+            <button type="button" class="btn btn-outline-primary btn-sm" id="showAvatarsBtn">
+                <i class="bi bi-image"></i> Choose from Default Avatars
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="hideAvatarsBtn">
+                <i class="bi bi-x"></i> Hide Avatars
+            </button>
+        </div>
+
+        <div id="avatarGallery" class="mb-3" style="display: none;">
+            <p class="text-muted mb-2">Select a default avatar:</p>
+            <div id="avatarContainer" class="d-flex flex-wrap gap-2">
+                <div class="text-center text-muted py-3">
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                    Loading avatars...
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom File Upload -->
+        <div class="mb-2">
+            <input asp-for="ProfileImageFile" type="file" class="form-control" id="customFileUpload" data-val="false" accept="image/jpeg,image/jpg,image/png,image/gif" />
+            <span asp-validation-for="ProfileImageFile" class="text-danger"></span>
+            <small class="form-text text-muted">Upload a custom image (JPG, PNG, GIF - Max 5MB)</small>
+        </div>
     </div>
 
     <div class="form-group">
@@ -98,201 +127,126 @@
     let selectedAvatarPath = '';
 
     // Show/Hide Avatar Gallery
-    document.getElementById('showAvatarsBtn').addEventListener('click', function() {
-        const gallery = document.getElementById('avatarGallery');
+    const showBtn = document.getElementById('showAvatarsBtn');
+    const hideBtn = document.getElementById('hideAvatarsBtn');
+    const gallery = document.getElementById('avatarGallery');
+
+    showBtn?.addEventListener('click', () => {
         gallery.style.display = 'block';
-        this.classList.add('d-none');
-        document.getElementById('hideAvatarsBtn').classList.remove('d-none');
-
-        // Load avatars only once
-        if (!avatarsLoaded) {
-            loadAvatars();
-        }
+        showBtn.classList.add('d-none');
+        hideBtn.classList.remove('d-none');
+        if (!avatarsLoaded) loadAvatars();
     });
 
-    document.getElementById('hideAvatarsBtn').addEventListener('click', function() {
-        document.getElementById('avatarGallery').style.display = 'none';
-        this.classList.add('d-none');
-        document.getElementById('showAvatarsBtn').classList.remove('d-none');
+    hideBtn?.addEventListener('click', () => {
+        gallery.style.display = 'none';
+        hideBtn.classList.add('d-none');
+        showBtn.classList.remove('d-none');
     });
 
-    // Load available avatars from server
     function loadAvatars() {
         fetch('/UserProfiles/GetAvailableAvatars')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to load avatars');
-                }
-                return response.json();
-            })
+            .then(res => res.ok ? res.json() : Promise.reject('Failed to load avatars'))
             .then(avatars => {
                 const container = document.getElementById('avatarContainer');
-
-                if (avatars.length === 0) {
-                    container.innerHTML = '<p class="text-muted">No default avatars available. Please add images to wwwroot/images/avatars/</p>';
+                if (!avatars || avatars.length === 0) {
+                    container.innerHTML = '<p class="text-muted">No default avatars available.</p>';
                     avatarsLoaded = true;
                     return;
                 }
-
                 container.innerHTML = '';
-
-                avatars.forEach(avatarPath => {
+                avatars.forEach(path => {
                     const img = document.createElement('img');
-                    img.src = avatarPath;
+                    img.src = path;
                     img.alt = 'Avatar option';
                     img.className = 'avatar-option';
-                    img.dataset.avatarPath = avatarPath;
+                    img.dataset.avatarPath = path;
 
-                    // Check if this is the current profile image
+                    // Preselect current image if matches
                     const currentImg = document.getElementById('currentProfileImg');
-                    if (currentImg && currentImg.src.endsWith(avatarPath)) {
+                    if (currentImg && currentImg.src.endsWith(path)) {
                         img.classList.add('selected');
-                        selectedAvatarPath = avatarPath;
+                        selectedAvatarPath = path;
+                        document.getElementById('selectedAvatarInput').value = path;
                     }
 
-            // Show loading state
-            locationInput.value = "Getting location...";
+                    img.addEventListener('click', () => {
+                        document.querySelectorAll('.avatar-option').forEach(a => a.classList.remove('selected'));
+                        img.classList.add('selected');
+                        selectedAvatarPath = path;
+                        document.getElementById('selectedAvatarInput').value = path;
 
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
+                        // Clear custom upload
+                        const uploadInput = document.getElementById('customFileUpload');
+                        if (uploadInput) uploadInput.value = '';
 
-                    // Use OpenStreetMap's Nominatim API for reverse geocoding
-                    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
-                        .then(response => response.json())
-                        .then(data => {
-                            const city = data.address.city || data.address.town || data.address.village || '';
-                            const state = data.address.state || '';
-                            const country = data.address.country || '';
+                        // Update preview
+                        const previewImg = document.getElementById('currentProfileImg');
+                        if (previewImg) previewImg.src = path;
+                    });
 
-                            // Format: "City, State" or "City, Country" depending on what's available
-                            let location = '';
-                            if (city && state) {
-                                location = `${city}, ${state}`;
-                            } else if (city && country) {
-                                location = `${city}, ${country}`;
-                            } else if (state) {
-                                location = state;
-                            } else {
-                                location = country;
-                            }
-
+                    container.appendChild(img);
+                });
                 avatarsLoaded = true;
             })
-            .catch(error => {
-                console.error('Error loading avatars:', error);
-                document.getElementById('avatarContainer').innerHTML = '<p class="text-danger">Error loading avatars. Please refresh the page.</p>';
+            .catch(err => {
+                console.error('Error loading avatars:', err);
+                document.getElementById('avatarContainer').innerHTML = '<p class="text-danger">Error loading avatars.</p>';
             });
     }
 
-    // Clear avatar selection if user uploads custom file
-    document.getElementById('customFileUpload').addEventListener('change', function(event) {
-        console.log('=== FILE UPLOAD CHANGE EVENT TRIGGERED ===');
-        console.log('Files selected:', this.files.length);
+    // Handle custom file upload
+    const fileUpload = document.getElementById('customFileUpload');
+    fileUpload?.addEventListener('change', function () {
+        if (this.files.length === 0) return;
 
-        if (this.files.length > 0) {
-            const file = this.files[0];
-            console.log('File details:', {
-                name: file.name,
-                size: file.size,
-                type: file.type,
-                lastModified: new Date(file.lastModified)
-            });
+        const file = this.files[0];
+        const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        const maxSize = 5 * 1024 * 1024; // 5MB
 
-            // Validate file type
-            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-            console.log('Checking file type...');
-            if (!allowedTypes.includes(file.type.toLowerCase())) {
-                console.error('Invalid file type:', file.type);
-                alert('Invalid file type. Please upload a JPEG, PNG, or GIF image.');
-                this.value = '';
-                return;
-            }
-            console.log('File type valid ✓');
-
-            // Validate file size (5MB max)
-            const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-            console.log('Checking file size...', file.size, 'bytes (max:', maxSize, 'bytes)');
-            if (file.size > maxSize) {
-                console.error('File too large:', file.size);
-                alert('File too large. Please upload an image smaller than 5MB.');
-                this.value = '';
-                return;
-            }
-            console.log('File size valid ✓');
-
-            // Clear avatar selection
-            console.log('Clearing avatar selection...');
-            document.getElementById('selectedAvatarInput').value = '';
-            document.querySelectorAll('.avatar-option').forEach(av => {
-                av.classList.remove('selected');
-            });
-            selectedAvatarPath = '';
-            console.log('Avatar selection cleared ✓');
-
-            // Preview uploaded file
-            if (file.type.startsWith('image/')) {
-                console.log('Starting file read for preview...');
-                const reader = new FileReader();
-
-                reader.onloadstart = function() {
-                    console.log('FileReader started loading...');
-                };
-
-                reader.onprogress = function(e) {
-                    if (e.lengthComputable) {
-                        const percentLoaded = Math.round((e.loaded / e.total) * 100);
-                        console.log('FileReader progress:', percentLoaded + '%');
-                    }
-                };
-
-                reader.onload = function(e) {
-                    console.log('FileReader completed successfully ✓');
-                    const currentImg = document.getElementById('currentProfileImg');
-                    if (currentImg) {
-                        console.log('Updating existing preview image...');
-                        currentImg.src = e.target.result;
-                    } else {
-                        console.log('Creating new preview image...');
-                        // Create preview if it doesn't exist
-                        const previewDiv = document.createElement('div');
-                        previewDiv.className = 'mb-3';
-                        previewDiv.innerHTML = '<img src="' + e.target.result + '" alt="Preview" id="currentProfileImg" style="max-width: 150px; max-height: 150px; border-radius: 50%; border: 3px solid #ddd;" /><p class="text-muted mb-0">Preview of uploaded image</p>';
-
-                        // Insert after the Profile Image label
-                        const uploadSection = document.getElementById('customFileUpload').closest('.mb-2');
-                        if (uploadSection && uploadSection.previousElementSibling) {
-                            uploadSection.parentElement.insertBefore(previewDiv, uploadSection.previousElementSibling.nextSibling);
-                        }
-                    }
-                    console.log('Preview updated ✓');
-                    console.log('=== FILE UPLOAD COMPLETE ===');
-                };
-
-                reader.onerror = function(error) {
-                    console.error('❌ FileReader ERROR:', error);
-                    console.error('Error details:', reader.error);
-                    alert('Failed to read the image file. Please try a different image.');
-                    document.getElementById('customFileUpload').value = '';
-                };
-
-                reader.onabort = function() {
-                    console.error('❌ FileReader ABORTED');
-                };
-
-                console.log('Calling readAsDataURL...');
-                try {
-                    reader.readAsDataURL(file);
-                    console.log('readAsDataURL called successfully');
-                } catch (error) {
-                    console.error('❌ Exception calling readAsDataURL:', error);
-                }
-            } else {
-                console.warn('File type does not start with "image/":', file.type);
-            }
-        } else {
-            console.log('No files selected');
+        if (!allowed.includes(file.type.toLowerCase())) {
+            alert('Invalid file type. Use JPG, PNG, or GIF.');
+            this.value = '';
+            return;
         }
-    </script>
-}
+
+        if (file.size > maxSize) {
+            alert('File too large. Max 5MB.');
+            this.value = '';
+            return;
+        }
+
+        // Clear avatar selection
+        selectedAvatarPath = '';
+        document.getElementById('selectedAvatarInput').value = '';
+        document.querySelectorAll('.avatar-option').forEach(a => a.classList.remove('selected'));
+
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const previewImg = document.getElementById('currentProfileImg');
+            if (previewImg) previewImg.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // Location button function
+    function getMyLocation() {
+        const locationInput = document.getElementById('locationInput');
+        if (!navigator.geolocation) return alert('Geolocation not supported.');
+
+        locationInput.value = 'Getting location...';
+        navigator.geolocation.getCurrentPosition(pos => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+                .then(res => res.json())
+                .then(data => {
+                    const city = data.address.city || data.address.town || data.address.village || '';
+                    const state = data.address.state || '';
+                    const country = data.address.country || '';
+                    locationInput.value = city && state ? `${city}, ${state}` : city && country ? `${city}, ${country}` : state || country || '';
+                });
+        }, err => alert('Unable to retrieve location.'));
+    }
+</script>

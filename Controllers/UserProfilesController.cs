@@ -1,10 +1,8 @@
-﻿using AutoMapper;
-using CS478_EventPlannerProject.Models;
+﻿using CS478_EventPlannerProject.Models;
 using CS478_EventPlannerProject.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq.Expressions;
 
 namespace CS478_EventPlannerProject.Controllers
 {
@@ -14,13 +12,27 @@ namespace CS478_EventPlannerProject.Controllers
         private readonly IUserProfileService _userProfileService;
         private readonly UserManager<Users> _userManager;
         private readonly IEventService _eventService;
+        private readonly ILogger<UserProfilesController> _logger;
 
-        public UserProfilesController(IUserProfileService userProfileService, UserManager<Users> userManager, IEventService eventService)
+        // Constants
+        private const int RecentEventsDisplayCount = 5;
+        private const int MaxProfileImageSizeBytes = 5 * 1024 * 1024; // 5MB
+        private const int MinSearchTermLength = 2;
+        private const int MaxSearchResults = 10;
+        private static readonly string[] AllowedImageTypes = { "image/jpeg", "image/jpg", "image/png", "image/gif" };
+
+        public UserProfilesController(
+            IUserProfileService userProfileService,
+            UserManager<Users> userManager,
+            IEventService eventService,
+            ILogger<UserProfilesController> logger)
         {
             _userProfileService = userProfileService;
             _userManager = userManager;
             _eventService = eventService;
+            _logger = logger;
         }
+
         // GET: UserProfiles/Profile (Current user's profile)
         public async Task<IActionResult> Profile()
         {
@@ -29,42 +41,38 @@ namespace CS478_EventPlannerProject.Controllers
                 var currentUser = await _userManager.GetUserAsync(User);
                 if (currentUser == null)
                     return RedirectToAction("Login", "Account");
-                var profile = await _userProfileService.GetProfileByUserIdAsync(currentUser.Id);
-                if (profile == null)
-                {
-                    //create a new profile if one doesn't exist
-                    profile = new UserProfiles
-                    {
-                        UserId = currentUser.Id,
-                        DisplayName = currentUser.UserName
-                    };
-                }
-                //Get user's events for profile display
+
+                var profile = await GetOrCreateProfileAsync(currentUser.Id, currentUser.UserName);
+
+                // Get user's events for profile display
                 var userEvents = await _eventService.GetEventsByUserIdAsync(currentUser.Id);
-                ViewBag.UserEvents = userEvents.Take(5).ToList(); //show only recent 5
+                ViewBag.UserEvents = userEvents.Take(RecentEventsDisplayCount).ToList();
                 ViewBag.TotalEvents = userEvents.Count();
                 ViewBag.IsCurrentUser = true;
 
                 return View(profile);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to load profile for user");
                 TempData["Error"] = "Failed to load profile.";
                 return RedirectToAction("Index", "Dashboard");
             }
-
         }
+
         // GET: UserProfiles/View/userId (View another user's public profile)
         public async Task<IActionResult> View(string userId)
         {
             if (string.IsNullOrWhiteSpace(userId))
                 return BadRequest();
+
             try
             {
                 var profile = await _userProfileService.GetProfileByUserIdAsync(userId);
                 if (profile == null)
                     return NotFound();
-                //check if profile is public or if current user is admin
+
+                // Check if profile is public or if current user is admin/owner
                 if (!profile.IsPublic && !User.IsInRole("Admin"))
                 {
                     var currentUser = await _userManager.GetUserAsync(User);
@@ -73,24 +81,27 @@ namespace CS478_EventPlannerProject.Controllers
                         return Forbid();
                     }
                 }
-                //get user's public events
+
+                // Get user's public events
                 var userEvents = await _eventService.GetEventsByUserIdAsync(userId);
-                var publicEvents = userEvents.Where(e => !e.IsPrivate).Take(5).ToList();
+                var publicEvents = userEvents.Where(e => !e.IsPrivate).Take(RecentEventsDisplayCount).ToList();
 
                 ViewBag.UserEvents = publicEvents;
                 ViewBag.TotalPublicEvents = userEvents.Count(e => !e.IsPrivate);
+
                 var currentViewingUser = await _userManager.GetUserAsync(User);
                 ViewBag.IsCurrentUser = currentViewingUser?.Id == userId;
 
-
                 return View("Profile", profile);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to load user profile for userId: {UserId}", userId);
                 TempData["Error"] = "Failed to load user profile.";
                 return RedirectToAction("Index", "Dashboard");
             }
         }
+
         // GET: UserProfiles/Edit
         public async Task<IActionResult> Edit()
         {
@@ -99,24 +110,18 @@ namespace CS478_EventPlannerProject.Controllers
                 var currentUser = await _userManager.GetUserAsync(User);
                 if (currentUser == null)
                     return RedirectToAction("Login", "Account");
-                var profile = await _userProfileService.GetProfileByUserIdAsync(currentUser.Id);
-                if (profile == null)
-                {
-                    //create a new profile if one doesn't exist
-                    profile = new UserProfiles
-                    {
-                        UserId = currentUser.Id,
-                        DisplayName = currentUser.UserName
-                    };
-                }
+
+                var profile = await GetOrCreateProfileAsync(currentUser.Id, currentUser.UserName);
                 return View(profile);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to load profile for editing");
                 TempData["Error"] = "Failed to load profile for editing.";
                 return RedirectToAction(nameof(Profile));
             }
         }
+
         // POST: UserProfiles/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -131,12 +136,13 @@ namespace CS478_EventPlannerProject.Controllers
             ModelState.Remove("ProfileImageFile");
             ModelState.Remove("SelectedAvatar");
 
-            //ensure the profile belongs to the current user (security check)
+            // Ensure the profile belongs to the current user (security check)
             if (profile.UserProfileId != 0)
             {
                 var existingProfile = await _userProfileService.GetProfileByUserIdAsync(currentUser.Id);
                 if (existingProfile == null || existingProfile.UserProfileId != profile.UserProfileId)
                 {
+                    _logger.LogWarning("Unauthorized profile edit attempt by user {UserId}", currentUser.Id);
                     return Forbid();
                 }
             }
@@ -145,66 +151,8 @@ namespace CS478_EventPlannerProject.Controllers
             {
                 try
                 {
-                    // Priority 1: Handle selected avatar (from default avatars)
-                    if (!string.IsNullOrEmpty(SelectedAvatar))
-                    {
-                        profile.ProfileImageUrl = SelectedAvatar;
-                    }
-                    // Priority 2: Handle custom file upload
-                    else if (profile.ProfileImageFile != null && profile.ProfileImageFile.Length > 0)
-                    {
-                        // Validate file type
-                        var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif" };
-                        if (!allowedTypes.Contains(profile.ProfileImageFile.ContentType.ToLower()))
-                        {
-                            ModelState.AddModelError("ProfileImageFile", "Invalid file type. Please upload a JPEG, PNG, or GIF image.");
-                            return View(profile);
-                        }
-
-                        // Validate file size (5MB max)
-                        if (profile.ProfileImageFile.Length > 5 * 1024 * 1024)
-                        {
-                            ModelState.AddModelError("ProfileImageFile", "File too large. Please upload an image smaller than 5MB.");
-                            return View(profile);
-                        }
-
-                        // Create wwwroot/images/profiles folder if it doesn't exist
-                        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "profiles");
-                        Directory.CreateDirectory(uploadsFolder);
-
-                        // Generate unique filename
-                        var uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(profile.ProfileImageFile.FileName);
-                        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                        // Save the file
-                        using (var fileStream = new FileStream(filePath, FileMode.Create))
-                        {
-                            await profile.ProfileImageFile.CopyToAsync(fileStream);
-                        }
-
-                        // Delete old image if exists and it's a custom upload (not default avatar)
-                        if (!string.IsNullOrEmpty(profile.ProfileImageUrl) &&
-                            profile.ProfileImageUrl.StartsWith("/images/profiles/"))
-                        {
-                            var oldImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", profile.ProfileImageUrl.TrimStart('/'));
-                            if (System.IO.File.Exists(oldImagePath))
-                            {
-                                try
-                                {
-                                    System.IO.File.Delete(oldImagePath);
-                                }
-                                catch (Exception ex)
-                                {
-                                    // Log but don't fail if we can't delete old image
-                                    System.Diagnostics.Debug.WriteLine($"Could not delete old image: {ex.Message}");
-                                }
-                            }
-                        }
-
-                        // Store the relative path in the database
-                        profile.ProfileImageUrl = "/images/profiles/" + uniqueFileName;
-                    }
-                    // Priority 3: Keep existing image if no changes
+                    // Handle profile image with priority order
+                    await HandleProfileImageAsync(profile, SelectedAvatar);
 
                     profile.UserId = currentUser.Id;
                     UserProfiles? updatedProfile;
@@ -212,11 +160,12 @@ namespace CS478_EventPlannerProject.Controllers
                     if (profile.UserProfileId == 0)
                     {
                         updatedProfile = await _userProfileService.CreateProfileAsync(profile);
+                        _logger.LogInformation("Created new profile for user {UserId}", currentUser.Id);
                     }
                     else
                     {
-                        //update existing profile
                         updatedProfile = await _userProfileService.UpdateProfileAsync(profile);
+                        _logger.LogInformation("Updated profile for user {UserId}", currentUser.Id);
                     }
 
                     if (updatedProfile != null)
@@ -224,50 +173,54 @@ namespace CS478_EventPlannerProject.Controllers
                         TempData["Success"] = "Profile updated successfully!";
                         return RedirectToAction(nameof(Profile));
                     }
+
                     TempData["Error"] = "Failed to update profile.";
                 }
                 catch (InvalidOperationException ex)
                 {
                     ModelState.AddModelError("", ex.Message);
-                    System.Diagnostics.Debug.WriteLine($"InvalidOperationException: {ex.Message}");
+                    _logger.LogError(ex, "InvalidOperationException while updating profile");
                 }
                 catch (ArgumentException ex)
                 {
                     ModelState.AddModelError("", ex.Message);
-                    System.Diagnostics.Debug.WriteLine($"ArgumentException: {ex.Message}");
+                    _logger.LogError(ex, "ArgumentException while updating profile");
                 }
                 catch (Exception ex)
                 {
                     TempData["Error"] = "An error occurred while updating the profile.";
-                    System.Diagnostics.Debug.WriteLine($"Error updating profile: {ex.Message}");
-                    System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                    _logger.LogError(ex, "Error updating profile for user {UserId}", currentUser.Id);
                 }
             }
             else
             {
-                // Log validation errors for debugging
+                // Log validation errors
                 foreach (var modelState in ModelState.Values)
                 {
                     foreach (var error in modelState.Errors)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Validation error: {error.ErrorMessage}");
+                        _logger.LogWarning("Validation error: {ErrorMessage}", error.ErrorMessage);
                     }
                 }
             }
 
             return View(profile);
         }
+
         // GET: UserProfiles/Delete
         public async Task<IActionResult> Delete()
         {
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null)
                 return RedirectToAction("Login", "Account");
+
             var profile = await _userProfileService.GetProfileByUserIdAsync(currentUser.Id);
             if (profile == null)
                 return NotFound();
+
             return View(profile);
         }
+
         // POST: UserProfiles/Delete
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
@@ -278,51 +231,60 @@ namespace CS478_EventPlannerProject.Controllers
                 var currentUser = await _userManager.GetUserAsync(User);
                 if (currentUser == null)
                     return RedirectToAction("Login", "Account");
+
                 var success = await _userProfileService.DeleteProfileAsync(currentUser.Id);
                 if (success)
                 {
+                    _logger.LogInformation("Profile deleted for user {UserId}", currentUser.Id);
                     TempData["Success"] = "Profile deleted successfully!";
                 }
                 else
                 {
+                    _logger.LogWarning("Failed to delete profile for user {UserId}", currentUser.Id);
                     TempData["Error"] = "Profile not found or could not be deleted.";
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error deleting profile");
                 TempData["Error"] = "An error occurred while deleting the profile.";
                 return RedirectToAction(nameof(Profile));
             }
+
             return RedirectToAction("Index", "Home");
         }
+
         // GET: UserProfiles/Search
         public async Task<IActionResult> Search(string searchTerm)
         {
             var results = new List<UserProfiles>();
+
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
                 try
                 {
                     results = (await _userProfileService.SearchProfilesAsync(searchTerm)).ToList();
-
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    _logger.LogError(ex, "Failed to search profiles with term: {SearchTerm}", searchTerm);
                     TempData["Error"] = "Failed to search profiles.";
-                    return View(results);
                 }
             }
+
             ViewBag.SearchTerm = searchTerm;
             return View(results);
         }
+
         // GET: UserProfiles/SearchApi - Returns JSON for AJAX
         [HttpGet]
         public async Task<IActionResult> SearchApi(string searchTerm)
         {
-            if (string.IsNullOrWhiteSpace(searchTerm) || searchTerm.Length < 2)
+            if (string.IsNullOrWhiteSpace(searchTerm) || searchTerm.Length < MinSearchTermLength)
             {
                 return Json(new List<object>());
             }
+
             try
             {
                 var profiles = await _userProfileService.SearchProfilesAsync(searchTerm);
@@ -331,14 +293,17 @@ namespace CS478_EventPlannerProject.Controllers
                     userId = p.UserId,
                     fullName = p.FullName,
                     displayName = p.DisplayName
-                }).Take(10);
+                }).Take(MaxSearchResults);
+
                 return Json(results);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "SearchApi failed for term: {SearchTerm}", searchTerm);
                 return Json(new List<object>());
             }
         }
+
         // GET: UserProfiles/Browse
         public async Task<IActionResult> Browse()
         {
@@ -347,12 +312,14 @@ namespace CS478_EventPlannerProject.Controllers
                 var profiles = await _userProfileService.GetAllPublicProfilesAsync();
                 return View(profiles);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to load profiles for browse");
                 TempData["Error"] = "Failed to load profiles.";
                 return View(new List<UserProfiles>());
             }
         }
+
         // POST: UserProfiles/UploadProfileImage (AJAX endpoint for profile image upload)
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -362,57 +329,39 @@ namespace CS478_EventPlannerProject.Controllers
             {
                 return Json(new { success = false, message = "No file selected" });
             }
+
             try
             {
                 var currentUser = await _userManager.GetUserAsync(User);
                 if (currentUser == null)
                     return Json(new { success = false, message = "User not authenticated." });
-                //validate file type
-                var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif" };
-                if (!allowedTypes.Contains(profileImage.ContentType.ToLower()))
+
+                // Validate file type
+                if (!AllowedImageTypes.Contains(profileImage.ContentType.ToLower()))
                 {
                     return Json(new { success = false, message = "Invalid file type. Please upload a JPEG, PNG, or GIF image." });
                 }
 
-                //validate file size (ex. 5MB max)
-                if (profileImage.Length > 5 * 1024 * 1024)
+                // Validate file size
+                if (profileImage.Length > MaxProfileImageSizeBytes)
                 {
                     return Json(new { success = false, message = "File too large. Please upload an image smaller than 5MB." });
                 }
 
-                // Create wwwroot/images/profiles folder if it doesn't exist
-                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "profiles");
-                Directory.CreateDirectory(uploadsFolder);
+                var imageUrl = await SaveProfileImageAsync(profileImage);
 
-                // Generate unique filename
-                var uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(profileImage.FileName);
-                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                // Save the file
-                using (var fileStream = new FileStream(filePath, FileMode.Create))
-                {
-                    await profileImage.CopyToAsync(fileStream);
-                }
-
-                var imageUrl = "/images/profiles/" + uniqueFileName;
-
-                //update user profile with new image url
+                // Update user profile with new image url
                 var profile = await _userProfileService.GetProfileByUserIdAsync(currentUser.Id);
                 if (profile != null)
                 {
                     // Delete old image if exists
-                    if (!string.IsNullOrEmpty(profile.ProfileImageUrl) && profile.ProfileImageUrl.StartsWith("/images/"))
-                    {
-                        var oldImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", profile.ProfileImageUrl.TrimStart('/'));
-                        if (System.IO.File.Exists(oldImagePath))
-                        {
-                            System.IO.File.Delete(oldImagePath);
-                        }
-                    }
+                    DeleteOldProfileImage(profile.ProfileImageUrl);
 
                     profile.ProfileImageUrl = imageUrl;
                     await _userProfileService.UpdateProfileAsync(profile);
+                    _logger.LogInformation("Profile image uploaded for user {UserId}", currentUser.Id);
                 }
+
                 return Json(new
                 {
                     success = true,
@@ -422,9 +371,11 @@ namespace CS478_EventPlannerProject.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error uploading profile image");
                 return Json(new { success = false, message = "An error occurred while uploading the image: " + ex.Message });
             }
         }
+
         // GET: UserProfiles/GetProfileData (AJAX endpoint)
         [HttpGet]
         public async Task<IActionResult> GetProfileData(string userId)
@@ -438,10 +389,12 @@ namespace CS478_EventPlannerProject.Controllers
                         return Json(new { success = false });
                     userId = currentUser.Id;
                 }
+
                 var profile = await _userProfileService.GetProfileByUserIdAsync(userId);
                 if (profile == null)
                     return Json(new { success = false });
-                //check if profile is public or if current user has access
+
+                // Check if profile is public or if current user has access
                 if (!profile.IsPublic)
                 {
                     var currentUser = await _userManager.GetUserAsync(User);
@@ -450,6 +403,7 @@ namespace CS478_EventPlannerProject.Controllers
                         return Json(new { success = false });
                     }
                 }
+
                 var result = new
                 {
                     success = true,
@@ -464,14 +418,29 @@ namespace CS478_EventPlannerProject.Controllers
                         isPublic = profile.IsPublic
                     }
                 };
+
                 return Json(result);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to get profile data for userId: {UserId}", userId);
                 return Json(new { success = false });
             }
         }
-    }
+
+        // GET: UserProfiles/GetAvailableAvatars (AJAX endpoint)
+        [HttpGet]
+        public IActionResult GetAvailableAvatars()
+        {
+            try
+            {
+                var avatarsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "avatars");
+
+                if (!Directory.Exists(avatarsFolder))
+                {
+                    _logger.LogWarning("Avatars folder does not exist: {Path}", avatarsFolder);
+                    return Json(new List<string>());
+                }
 
                 var avatarFiles = Directory.GetFiles(avatarsFolder)
                     .Where(f => f.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
@@ -483,11 +452,115 @@ namespace CS478_EventPlannerProject.Controllers
 
                 return Json(avatarFiles);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error loading available avatars");
                 return Json(new List<string>());
             }
         }
-    }
 
+        #region Private Helper Methods
+
+        /// <summary>
+        /// Gets an existing profile or creates a new one if it doesn't exist
+        /// </summary>
+        private async Task<UserProfiles> GetOrCreateProfileAsync(string userId, string? defaultDisplayName)
+        {
+            var profile = await _userProfileService.GetProfileByUserIdAsync(userId);
+
+            if (profile == null)
+            {
+                profile = new UserProfiles
+                {
+                    UserId = userId,
+                    DisplayName = defaultDisplayName
+                };
+            }
+
+            return profile;
+        }
+
+        /// <summary>
+        /// Handles profile image updates with priority: selected avatar > custom upload > existing
+        /// </summary>
+        private async Task HandleProfileImageAsync(UserProfiles profile, string? selectedAvatar)
+        {
+            // Priority 1: Handle selected avatar (from default avatars)
+            if (!string.IsNullOrEmpty(selectedAvatar))
+            {
+                profile.ProfileImageUrl = selectedAvatar;
+                return;
+            }
+
+            // Priority 2: Handle custom file upload
+            if (profile.ProfileImageFile != null && profile.ProfileImageFile.Length > 0)
+            {
+                // Validate file type
+                if (!AllowedImageTypes.Contains(profile.ProfileImageFile.ContentType.ToLower()))
+                {
+                    ModelState.AddModelError("ProfileImageFile", "Invalid file type. Please upload a JPEG, PNG, or GIF image.");
+                    return;
+                }
+
+                // Validate file size
+                if (profile.ProfileImageFile.Length > MaxProfileImageSizeBytes)
+                {
+                    ModelState.AddModelError("ProfileImageFile", "File too large. Please upload an image smaller than 5MB.");
+                    return;
+                }
+
+                // Delete old custom upload image if exists
+                DeleteOldProfileImage(profile.ProfileImageUrl);
+
+                // Save new image
+                profile.ProfileImageUrl = await SaveProfileImageAsync(profile.ProfileImageFile);
+            }
+
+            // Priority 3: Keep existing image (no action needed)
+        }
+
+        /// <summary>
+        /// Saves a profile image file and returns the URL path
+        /// </summary>
+        private async Task<string> SaveProfileImageAsync(IFormFile imageFile)
+        {
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "profiles");
+            Directory.CreateDirectory(uploadsFolder);
+
+            var uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(imageFile.FileName);
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await imageFile.CopyToAsync(fileStream);
+            }
+
+            return "/images/profiles/" + uniqueFileName;
+        }
+
+        /// <summary>
+        /// Deletes an old profile image if it's a custom upload
+        /// </summary>
+        private void DeleteOldProfileImage(string? imageUrl)
+        {
+            if (!string.IsNullOrEmpty(imageUrl) && imageUrl.StartsWith("/images/profiles/"))
+            {
+                var oldImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", imageUrl.TrimStart('/'));
+                if (System.IO.File.Exists(oldImagePath))
+                {
+                    try
+                    {
+                        System.IO.File.Delete(oldImagePath);
+                        _logger.LogInformation("Deleted old profile image: {ImagePath}", oldImagePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Could not delete old image: {ImagePath}", oldImagePath);
+                    }
+                }
+            }
+        }
+
+        #endregion
+    }
 }
