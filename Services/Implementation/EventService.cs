@@ -123,11 +123,13 @@ namespace CS478_EventPlannerProject.Services.Implementation
         //helper method for checking potentially dangerous script
         private static bool ValidateCustomCss(string css)
         {
+            if (string.IsNullOrWhiteSpace(css))
+                return true;
+            var cssLower = css.ToLower();
             var dangerousPatterns = new[]
             {
                 "javascript:",
                 "expression(",
-                "import",
                 "@import",
                 "url(data:",
                 "<script",
@@ -135,8 +137,23 @@ namespace CS478_EventPlannerProject.Services.Implementation
                 "onerror",
                 "onload"
             };
-            var cssLower = css.ToLower();
-            return !dangerousPatterns.Any(pattern => cssLower.Contains(pattern));
+            foreach (var pattern in dangerousPatterns)
+            {
+                //special handling for @import
+                if (pattern == "@import")
+                {
+                    if (System.Text.RegularExpressions.Regex.IsMatch(cssLower, @"import\s"))
+                    {
+                        return false;
+                    }
+                }
+                else if (cssLower.Contains(pattern))
+                {
+                    return false;
+                }
+            }
+            return true;
+            
         }
         public async Task<bool> DeleteEventAsync(int id)
         {
@@ -217,13 +234,13 @@ namespace CS478_EventPlannerProject.Services.Implementation
                 .ToListAsync();
         }
         public async Task<IEnumerable<Events>> SearchEventsAsync(
-    string? searchTerm = null,
-    int? categoryId = null,
-    string? location = null,
-    string? eventType = null,
-    string? dateRange = null,
-    DateTime? startDate = null,
-    DateTime? endDate = null)
+        string? searchTerm = null,
+        int? categoryId = null,
+        string? location = null,
+        string? eventType = null,
+        string? dateRange = null,
+        DateTime? startDate = null,
+        DateTime? endDate = null)
         {
             var query = _context.Events
                 .Include(e => e.Creator)

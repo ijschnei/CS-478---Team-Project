@@ -42,23 +42,11 @@
                     <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline;">
                         <button type="submit" class="account-link">Logout</button>
                     </form>
-                    <ul>
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Messages" asp-action="Index">
-                            <i class="bi bi-chat-dots"></i>Messages
-                            <span id="unread-badge" class="badge bg-danger"></span>
-                        </a>
-                    </li>
-                    </ul>
-                   
                 }
-
                 else
                 {
                     <a asp-controller="Account" asp-action="Login" class="account-link">Account</a>
                 }
-
-            </div>
 
         </header>
 
