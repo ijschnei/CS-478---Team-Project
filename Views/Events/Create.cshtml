@@ -389,7 +389,7 @@
     </div>
 </div>
 
-
+@section Scripts{
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Toggle between physical and virtual location fields
@@ -508,74 +508,257 @@
         // Make getEventLocation available globally for onclick handler
         window.getEventLocation = getEventLocation;
     });
-        
 
-        const cssEditor = document.getElementById('customCssEditor');
-        const charCount = document.getElementById('cssCharCount');
-        const previewPanel = document.getElementById('cssPreviewPanel');
-        const previewContent = document.getElementById('cssPreviewContent');
-        const validationAlert = document.getElementById('cssValidationAlert');
-        const validationSuccess = document.getElementById('cssValidationSuccess');
-        const validationMessage = document.getElementById('cssValidationMessage');
-        const MAX_CSS_LENGTH = 10000;
-        let previewStyleElement = null;
+    const cssEditor = document.getElementById('customCssEditor');
+    const charCount = document.getElementById('cssCharCount');
+    const previewPanel = document.getElementById('cssPreviewPanel');
+    const previewContent = document.getElementById('cssPreviewContent');
+    const validationAlert = document.getElementById('cssValidationAlert');
+    const validationSuccess = document.getElementById('cssValidationSuccess');
+    const validationMessage = document.getElementById('cssValidationMessage');
+    const MAX_CSS_LENGTH = 10000;
+    let previewStyleElement = null;
 
-        const cssTemplates = {
-            modern: `/* Modern Minimal Template */\n.event-header { background-color: #f8f9fa; border-radius: 8px; padding: 20px; }\n.event-title { font-family: 'Arial', sans-serif; color: #333; }\n.event-description { font-family: 'Arial', sans-serif; color: #555; }`,
-            vibrant: `/* Vibrant Colors Template */\n.event-header { background: linear-gradient(135deg, #ff416c, #ff4b2b); color: white; padding: 20px; border-radius: 8px; }\n.event-title { font-family: 'Helvetica', sans-serif; }\n.event-description { font-family: 'Helvetica', sans-serif; }`,
-            elegant: `/* Elegant Dark Template */\n.event-header { background-color: #2c3e50; color: white; padding: 20px; border-radius: 8px; }\n.event-title { font-family: 'Georgia', serif; }\n.event-description { font-family: 'Georgia', serif; }`,
-            playful: `/* Playful Fun Template */\n.event-header { background-color: #f39c12; color: #fff; padding: 20px; border-radius: 12px; }\n.event-title { font-family: 'Comic Sans MS', cursive; }\n.event-description { font-family: 'Comic Sans MS', cursive; }`
-        };
+    const cssTemplates = {
+            modern: `/* Modern Minimal Theme */
+    .event-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border-radius: 12px !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2) !important;
+    }
 
-        cssEditor.addEventListener('input', () => {
-            charCount.textContent = `${cssEditor.value.length} / ${MAX_CSS_LENGTH} characters`;
-            if (cssEditor.value.length > MAX_CSS_LENGTH) {
-                charCount.classList.add('text-danger');
-            } else {
-                charCount.classList.remove('text-danger');
+    .event-title {
+        font-size: 2.5em !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.5px !important;
+    }
+
+    .event-description, .event-location {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        border-left: 4px solid #667eea;
+    }
+
+    .btn-rsvp {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        transition: all 0.3s ease;
+    }
+
+    .btn-rsvp:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }`,
+
+            vibrant: `/* Vibrant Colors Theme */
+    .event-header {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+        padding: 40px !important;
+    }
+
+    .event-title {
+        font-size: 3em !important;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2) !important;
+    }
+
+    .event-description h2, .event-location h3 {
+        color: #f5576c !important;
+        border-bottom: 3px solid #f093fb;
+        padding-bottom: 10px;
+    }
+
+    .btn-rsvp {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+        font-weight: bold !important;
+        text-transform: uppercase !important;
+    }`,
+
+            elegant: `/* Elegant Dark Theme */
+    .event-header {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important;
+        border-bottom: 3px solid #0f3460 !important;
+    }
+
+    .event-title {
+        font-family: Georgia, serif !important;
+        font-size: 2.8em !important;
+        color: #eee !important;
+    }
+
+    .event-date {
+        color: #94a3b8 !important;
+        font-style: italic !important;
+    }
+
+    .btn-rsvp {
+        background: #0f3460 !important;
+        border: 2px solid #16213e !important;
+    }`,
+
+            playful: `/* Playful Fun Theme */
+    .event-header {
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%) !important;
+        border-radius: 20px !important;
+        border: 5px dashed #ff8c69 !important;
+    }
+
+    .event-title {
+        color: #ff6b6b !important;
+        transform: rotate(-2deg);
+    }
+
+    .event-description, .event-location {
+        background: #fff5e1;
+        border-radius: 15px;
+        padding: 20px;
+        border: 3px solid #ffd93d;
+    }
+
+    .btn-rsvp {
+        background: #ff6b6b !important;
+        border-radius: 25px !important;
+        font-weight: bold !important;
+    }`
+    };
+            // Update character count on input
+    if (cssEditor) {
+        cssEditor.addEventListener('input', function() {
+            updateCharCount();
+            if (previewPanel.style.display !== 'none') {
+                applyPreviewStyles();
             }
         });
 
-        function toggleCssPreview() {
-            if (previewPanel.style.display === 'none') {
-                previewPanel.style.display = 'block';
-                applyCssToPreview();
-            } else {
-                previewPanel.style.display = 'none';
-            }
-        }
+        // Initialize character count
+        updateCharCount();
+    }
 
-        function applyCssToPreview() {
-            if (previewStyleElement) {
-                previewStyleElement.remove();
-            }
-            previewStyleElement = document.createElement('style');
-            previewStyleElement.textContent = cssEditor.value;
-            previewContent.appendChild(previewStyleElement);
-        }
+    function updateCharCount() {
+        const length = cssEditor.value.length;
+        charCount.textContent = `${length} / ${MAX_CSS_LENGTH} characters`;
 
-        function refreshCssPreview() {
+        if (length > MAX_CSS_LENGTH) {
+            charCount.classList.add('text-danger');
+        } else {
+            charCount.classList.remove('text-danger');
+        }
+    }
+
+    function toggleCssPreview() {
+        if (previewPanel.style.display === 'none') {
+            previewPanel.style.display = 'block';
             applyCssToPreview();
+        } else {
+            previewPanel.style.display = 'none';
+        }
+    }
+
+    function applyPreviewStyles() {
+        // Remove existing preview style
+        if (previewStyleElement) {
+            previewStyleElement.remove();
         }
 
-        function applyCssTemplate(templateName) {
-            if (cssTemplates[templateName]) {
-                cssEditor.value = cssTemplates[templateName];
-                charCount.textContent = `${cssEditor.value.length} / ${MAX_CSS_LENGTH} characters`;
-                applyCssToPreview();
-            }
+        // Create new style element
+        previewStyleElement = document.createElement('style');
+        previewStyleElement.textContent = cssEditor.value;
+        previewContent.appendChild(previewStyleElement);
+    }
+
+    function refreshCssPreview() {
+        applyPreviewStyles();
+    }
+
+    function formatCss() {
+        let css = cssEditor.value;
+
+        // Basic CSS formatting
+        css = css.replace(/\s*{\s*/g, ' {\n    ');
+        css = css.replace(/;\s*/g, ';\n    ');
+        css = css.replace(/\s*}\s*/g, '\n}\n\n');
+        css = css.replace(/\n\s*\n\s*\n/g, '\n\n');
+        css = css.trim();
+
+        cssEditor.value = css;
+        updateCharCount();
+
+        if (previewPanel.style.display !== 'none') {
+            applyPreviewStyles();
+        }
+    }
+
+    function validateCss() {
+        const css = cssEditor.value;
+        // Hide previous alerts
+        validationAlert.style.display = 'none';
+        validationSuccess.style.display = 'none';
+
+        // Check length
+        if (css.length > MAX_CSS_LENGTH) {
+            showValidationError(`CSS is too long (${css.length} characters). Maximum allowed is ${MAX_CSS_LENGTH}.`);
+            return false;
         }
 
-        function validateCss() {
-            try {
-                new Function(cssEditor.value);
-                validationAlert.style.display = 'none';
-                validationSuccess.style.display = 'block';
-            } catch (err) {
-                validationAlert.style.display = 'block';
-                validationSuccess.style.display = 'none';
-                validationMessage.textContent = err.message;
+        // Check for dangerous patterns
+        const dangerousPatterns = [
+            { pattern: /javascript:/gi, name: 'javascript:' },
+            { pattern: /expression\(/gi, name: 'expression()' },
+            { pattern: /url\(data:/gi, name: 'data URLs' },
+            { pattern: /<script/gi, name: '<script>' },
+            { pattern: /on(click|load|error|mouse)/gi, name: 'inline event handlers' }
+        ];
+        for (let check of dangerousPatterns) {
+            if (check.pattern.test(css)) {
+                showValidationError(`Potentially unsafe content detected: ${check.name}`);
+                return false;
             }
         }
+        // Show success
+        validationSuccess.style.display = 'block';
+        setTimeout(() => {
+            validationSuccess.style.display = 'none';
+        }, 3000);
+
+        return true;
+    }
+
+    function showValidationError(message) {
+        validationMessage.textContent = message;
+        validationAlert.style.display = 'block';
+
+        // Scroll to alert
+        validationAlert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function applyCssTemplate(templateName) {
+        if (templateName && cssTemplates[templateName]) {
+            if (cssEditor.value && !confirm('This will replace your current CSS. Continue?')) {
+                document.getElementById('cssTemplateSelect').value = '';
+                return;
+            }
+
+            cssEditor.value = cssTemplates[templateName];
+            updateCharCount();
+
+            if (previewPanel.style.display !== 'none') {
+                applyPreviewStyles();
+            }
+            // Reset dropdown
+            setTimeout(() => {
+                document.getElementById('cssTemplateSelect').value = '';
+            }, 100);
+        }
+    }
+
+    // Validate before form submission
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (cssEditor.value.trim()) {
+            if (!validateCss()) {
+                e.preventDefault();
+                alert('Please fix CSS validation errors before saving.');
+                return false;
+            }
+        }
+    });
     </script>
 }
