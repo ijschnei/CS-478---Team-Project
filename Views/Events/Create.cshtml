@@ -130,10 +130,17 @@
                     <!-- Venue Selection -->
                     <div id="venueSelection" style="display: block;">
                         <div class="alert alert-info">
-                            <strong>Select a Venue:</strong> Choose from our available venues below
+                            <strong>Select a Venue:</strong> Choose from our available venues below or enter a custom location
                         </div>
 
-                        <div class="venue-grid">
+                        <!-- Option to use custom location -->
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="toggleCustomLocationBtn">
+                                <i class="bi bi-pencil"></i> Enter Custom Location Instead
+                            </button>
+                        </div>
+
+                        <div class="venue-grid" id="venueGrid">
                             @if (venues != null && venues.Any())
                             {
                                 foreach (var venue in venues)
@@ -160,6 +167,48 @@
                                     No venues available. Please contact administrator.
                                 </div>
                             }
+                        </div>
+
+                        <!-- Custom Location Entry (hidden by default) -->
+                        <div id="customLocationEntry" style="display: none;" class="mt-4">
+                            <div class="form-group">
+                                <label asp-for="VenueName" class="control-label">Venue Name</label>
+                                <input asp-for="VenueName" class="form-control" placeholder="Enter venue name" />
+                                <span asp-validation-for="VenueName" class="text-danger"></span>
+                            </div>
+
+                            <div class="form-group mt-3">
+                                <label asp-for="Address" class="control-label">Street Address</label>
+                                <div class="input-group">
+                                    <input asp-for="Address" class="form-control" id="addressInput" placeholder="Street address" />
+                                    <button type="button" class="btn btn-outline-secondary" onclick="getEventLocation()">
+                                        <i class="bi bi-geo-alt-fill"></i> Use My Location
+                                    </button>
+                                </div>
+                                <span asp-validation-for="Address" class="text-danger"></span>
+                            </div>
+
+                            <div class="row mt-3">
+                                <div class="col-md-4">
+                                    <input asp-for="City" class="form-control" id="cityInput" placeholder="City" />
+                                </div>
+                                <div class="col-md-4">
+                                    <input asp-for="State" class="form-control" id="stateInput" placeholder="State" />
+                                </div>
+                                <div class="col-md-4">
+                                    <input asp-for="PostalCode" class="form-control" id="postalCodeInput" placeholder="Postal Code" />
+                                </div>
+                            </div>
+
+                            <div class="form-group mt-3">
+                                <input asp-for="Country" class="form-control" id="countryInput" placeholder="Country" />
+                            </div>
+
+                            <div class="mt-3">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="backToVenuesBtn">
+                                    <i class="bi bi-arrow-left"></i> Back to Venue Selection
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Selected Venue Details -->
@@ -353,6 +402,32 @@
                 document.getElementById('virtualLocation').style.display = 'none';
             }
         });
+
+        // Toggle between venue selection and custom location entry
+        const toggleCustomLocationBtn = document.getElementById('toggleCustomLocationBtn');
+        const backToVenuesBtn = document.getElementById('backToVenuesBtn');
+        const venueGrid = document.getElementById('venueGrid');
+        const customLocationEntry = document.getElementById('customLocationEntry');
+        const selectedVenueDetails = document.getElementById('selectedVenueDetails');
+
+        if (toggleCustomLocationBtn) {
+            toggleCustomLocationBtn.addEventListener('click', function() {
+                venueGrid.style.display = 'none';
+                toggleCustomLocationBtn.style.display = 'none';
+                selectedVenueDetails.style.display = 'none';
+                customLocationEntry.style.display = 'block';
+                // Clear selected venue
+                document.getElementById('selectedVenueId').value = '';
+            });
+        }
+
+        if (backToVenuesBtn) {
+            backToVenuesBtn.addEventListener('click', function() {
+                customLocationEntry.style.display = 'none';
+                venueGrid.style.display = 'block';
+                toggleCustomLocationBtn.style.display = 'block';
+            });
+        }
 
         // Get event location from geolocation
         function getEventLocation() {
